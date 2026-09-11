@@ -5,7 +5,7 @@
 # 🗺️ NearTrip
 ### Local Tourist Day-Visit Planner
 
-**Discover, Plan & Explore attractions within a 25 km radius of Dorawaka & Warakapola, Sri Lanka**
+**Discover, Plan & Explore attractions within a 25 km radius of  Warakapola, Sri Lanka**
 
 <br />
 
