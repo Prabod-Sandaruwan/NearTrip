@@ -1,0 +1,254 @@
+NEARTRIP SETUP GUIDE
+====================
+
+This guide describes how to run the NearTrip PHP/MySQL application locally
+with XAMPP on Windows.
+
+
+1. REQUIREMENTS
+---------------
+
+- Windows with XAMPP installed.
+- Apache and MySQL/MariaDB enabled in XAMPP.
+- PHP with mysqli, mysqlnd, mbstring, JSON, and session support enabled.
+- A browser with internet access for Google Fonts, Font Awesome, Leaflet,
+  and OpenStreetMap map tiles.
+
+
+2. DOWNLOAD AND INSTALL THE PROJECT
+------------------------------------
+
+1. Install Git and XAMPP.
+2. Clone the GitHub repository into the XAMPP web directory. Replace
+   YOUR-GITHUB-REPOSITORY with the actual repository URL:
+
+   cd C:\xampp\htdocs
+   git clone YOUR-GITHUB-REPOSITORY neartrip
+
+   If the project has already been cloned, update it with:
+
+   cd C:\xampp\htdocs\neartrip
+   git pull
+
+3. Open the XAMPP Control Panel.
+4. Start Apache.
+5. Start MySQL.
+
+The application does not require URL rewriting. PHP pages are opened directly.
+
+
+3. IMPORTANT: CHECK THE MYSQL PORT
+-----------------------------------
+
+The application currently defines the database port in:
+
+   includes/config.php
+
+The current value is:
+
+   define('DB_PORT', 3307);
+
+Your XAMPP MySQL port must match this value. If MySQL is using the usual XAMPP
+port 3306, change the line to:
+
+   define('DB_PORT', 3306);
+
+Also confirm the username, password, and database name in the same file:
+
+   define('DB_SERVER', '127.0.0.1');
+   define('DB_USERNAME', 'root');
+   define('DB_PASSWORD', '');
+   define('DB_NAME', 'neartrip');
+
+This is a required setup step. If the port in config.php does not match the
+running MySQL server, the build/application will fail with a database
+connection error. The file has fallback connection attempts, but the explicit
+port should still be set correctly for the local XAMPP installation.
+
+
+4. IMPORT THE DATABASE SQL FILE
+-------------------------------
+
+The repository includes neartrip.sql. It contains the complete database
+structure and starter data, including administrator, category, attraction,
+itinerary, and itinerary_attraction tables. It also includes starter
+categories, attractions, and user records.
+
+Use phpMyAdmin to import it:
+
+1. Open:
+
+   http://localhost/phpmyadmin/
+
+2. Create a database named neartrip. Use utf8mb4 if phpMyAdmin asks for a
+   character set or collation.
+3. Select the neartrip database.
+4. Open the Import tab.
+5. Choose neartrip.sql from the cloned project folder.
+6. Click Import or Go and wait for the success message.
+
+The SQL dump does not create the database itself, so the neartrip database must
+exist before importing the file. Do not import the file repeatedly into a
+database that already contains these tables unless you have first removed the
+existing NearTrip tables or created a fresh database.
+
+Command-line alternative, from the project folder:
+
+   C:\xampp\mysql\bin\mysql.exe -u root -p -P 3307 neartrip < neartrip.sql
+
+Use -P 3306 instead when your XAMPP MySQL server uses port 3306. For the usual
+XAMPP root account with no password, press Enter when prompted for the password.
+
+
+
+5. ADMINISTRATOR ACCOUNT
+------------------------
+
+The SQL dump contains seeded accounts, including:
+
+   admin@neartrip.com   role: admin
+   user@neartrip.com    role: user
+
+The SQL file contains password hashes, not readable passwords. Use the
+credentials supplied by the project owner for a seeded account. If those
+passwords are unavailable, create a new account instead:
+
+1. Open:
+
+   http://localhost/neartrip/admin/login.php?action=register
+
+2. Register an account. Public registration always creates a user with role
+   user.
+3. In phpMyAdmin, promote that account to administrator. Replace the email:
+
+   UPDATE administrator
+   SET role = 'admin'
+   WHERE email = 'your-email@example.com';
+
+4. Log out and log in again at:
+
+   http://localhost/neartrip/admin/login.php
+
+Login uses the email address and password. Passwords are stored using PHP
+password hashing; do not insert a plain-text password into password_hash.
+
+
+6. APPLICATION URLS
+-------------------
+
+Public home page:
+   http://localhost/neartrip/
+
+Places:
+   http://localhost/neartrip/places.php
+
+Map:
+   http://localhost/neartrip/map.php
+
+Trip planner:
+   http://localhost/neartrip/plan.php
+
+Admin dashboard:
+   http://localhost/neartrip/admin/dashboard.php
+
+Admin attractions:
+   http://localhost/neartrip/admin/attractions.php
+
+Admin categories:
+   http://localhost/neartrip/admin/categories.php
+
+User dashboard:
+   http://localhost/neartrip/user/dashboard.php
+
+User profile:
+   http://localhost/neartrip/user/profile.php
+
+
+7. ADD INITIAL CONTENT
+----------------------
+
+After logging in as an administrator:
+
+1. Add categories in admin/categories.php.
+2. Add attractions in admin/add_attraction.php.
+3. Enter latitude and longitude if the attraction should appear on the map.
+4. For an image, enter a path relative to the project root, for example:
+
+   assets/dunumala.webp
+   images/hero.webp
+   uploads/attractions/example.jpg
+
+The forms store the image path as text. They do not upload files automatically.
+The uploads/attractions directory exists but is not used by an upload handler.
+
+
+8. VERIFY THE INSTALLATION
+--------------------------
+
+1. Open the home page and confirm the navigation loads.
+2. Open Places and confirm categories and attractions are displayed.
+3. Open Map and confirm attractions with valid coordinates are shown.
+4. Log in as the promoted administrator and open the admin dashboard.
+5. Add an attraction and verify it appears on the public pages.
+6. Add attractions to a trip, save the itinerary, and verify it appears in the
+   user dashboard.
+
+
+9. TROUBLESHOOTING
+------------------
+
+Database connection error:
+   Confirm MySQL is running, the database is named neartrip, and the port in
+   includes/config.php matches the MySQL port shown by XAMPP. The most common
+   mismatch is config.php using 3307 while XAMPP MySQL is listening on 3306.
+
+Import errors or table/column errors:
+   Confirm that the neartrip database was created first and that neartrip.sql
+   was imported into that selected database. Use a fresh empty database when
+   retrying an import.
+
+Admin pages redirect to login:
+   Confirm the logged-in account has role exactly admin, then log out and back
+   in so the session receives the updated role.
+
+Images do not display:
+   Check that image_url is a valid path from the project root and that the file
+   exists under C:\xampp\htdocs\neartrip.
+
+Maps do not load:
+   Confirm latitude and longitude are present and that the browser can reach
+   the Leaflet and OpenStreetMap CDN endpoints.
+
+Blank or failed authentication:
+   Confirm PHP sessions and cookies are enabled and that the mysqli and mysqlnd
+   extensions are enabled in the PHP installation used by Apache.
+
+
+10. IMPORTANT FILES
+-------------------
+
+Database connection and shared includes:
+   includes/config.php
+   includes/auth.php
+   includes/functions.php
+
+Authentication:
+   admin/login.php
+   admin/logout.php
+
+Public pages:
+   index.php, places.php, details.php, map.php, plan.php, safety.php
+
+Administration:
+   admin/dashboard.php
+   admin/attractions.php
+   admin/add_attraction.php
+   admin/edit_attraction.php
+   admin/categories.php
+   admin/users.php
+
+Frontend assets:
+   assets/css/style.css
+   assets/js/main.js
+   assets/js/itinerary.js
+   assets/js/map.js

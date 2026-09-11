@@ -1,0 +1,24 @@
+﻿# XAMPP / PHP environment files
+*.log
+*.bak
+
+# PHP session files (if stored locally)
+/tmp/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sensitive config override (keep config.php but exclude local overrides)
+config.local.php
+
+# Uploaded files (optional: comment out if you want to track uploads)
+/uploads/attractions/*
+!/uploads/attractions/.gitkeep
