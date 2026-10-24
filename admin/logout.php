@@ -1,12 +1,7 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Logout Endpoint (admin/logout.php)
- * 
- * Requirement Coverage:
- * - SE-07, SE-08: Secure session destruction & logout redirect
- * ===================================================================
+ * User and admin logout endpoint.
+ * Clears session data, removes session cookie, and redirects to login page.
  */
 
 // Initialize or resume existing session

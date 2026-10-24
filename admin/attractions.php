@@ -1,31 +1,22 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Admin Attractions List Page (admin/attractions.php)
- * 
- * Requirement Coverage:
- * - FR-ADM-02, FR-MGT-01: List & manage all attractions in database
- * - SE-11: Admin Role Session Guard Protection
- * - FR-ADM-07, FR-ADM-08: Session flash notification messages
- * ===================================================================
+ * Attractions management page.
+ * Displays all attractions with options to add, view, edit, or delete them.
  */
 
-// Step 1: Include Database Config & Authentication Helpers
+// Load database configuration and helpers
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: Enforce Admin Role Guard (SE-11)
+// Require admin privileges
 requireAdmin();
 
-// Step 3: Define Page Title
+// Page title
 $pageTitle = "Manage Attractions - NearTrip Admin";
 
-// Step 4: Include Modular Header Component
+// Navigation header
 include_once __DIR__ . '/../includes/header.php';
 
-// -------------------------------------------------------------------
-// Step 5: FETCH ALL ATTRACTIONS JOINED WITH CATEGORIES FROM DB
-// -------------------------------------------------------------------
+// Fetch all attractions with category names from database
 $attractions = [];
 $sql = "SELECT a.*, c.category_name 
         FROM `attraction` a 
@@ -40,13 +31,11 @@ if ($result && $result->num_rows > 0) {
 }
 ?>
 
-<!-- ===================================================================
-     ADMIN ATTRACTIONS MANAGEMENT SECTION
-     =================================================================== -->
+<!-- Main attractions table section -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 1200px; margin: 0 auto;">
         
-        <!-- Top Flash Session Messages (FR-ADM-07 / FR-ADM-08) -->
+        <!-- Status message -->
         <?php if (isset($_SESSION['message'])): ?>
             <div class="admin-flash-banner alert-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'success' : 'danger'; ?>">
                 <i class="fas fa-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'circle-check' : 'circle-exclamation'; ?>"></i>
@@ -174,6 +163,6 @@ if ($result && $result->num_rows > 0) {
 </main>
 
 <?php
-// Include Modular Footer Component
+// Page footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

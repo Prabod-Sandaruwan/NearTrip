@@ -1,36 +1,21 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Administrative Control Dashboard (admin/dashboard.php)
- * 
- * Database: neartrip
- * Tables: attraction, category, administrator
- * 
- * Requirement Coverage & Viva Defense Points:
- * - SE-11: Procedural Session Guard & Role Access Control (Admin Role Required)
- * - Dynamic SQL Aggregation Queries (COUNT total attractions, categories, active spots)
- * - 3-Column Responsive Grid Summary Cards (Total Attractions, Total Categories, Active Spots)
- * - Quick Action Controller Buttons (Add New Attraction, Manage Categories, Manage Destinations)
- * - Recently Added Attractions Data Table with Edit/Delete Actions
- * ===================================================================
+ * Admin dashboard page.
+ * Displays system overview stats, quick action links, and recently added attractions.
  */
 
-// Step 1: Include Database Configuration & Auth Guard
+// Load database configuration and helpers
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: SE-11 Security Check - Require Admin Role
-// If session is unauthenticated or role is not 'admin', redirect to login.php
+// Require admin privileges
 requireAdmin();
 
-// -------------------------------------------------------------------
-// Step 3: DATABASE STATISTICAL QUERIES FOR SUMMARY CARDS
-// -------------------------------------------------------------------
+// Load stats for summary cards
 $totalAttractions = 0;
 $totalCategories  = 0;
 $activeAttractions = 0;
 
-// Query 1: Get Total Number of Attractions in Database
+// Total attractions count
 $sqlAttractions = "SELECT COUNT(*) AS total FROM `attraction`";
 $resAttractions = $conn->query($sqlAttractions);
 if ($resAttractions) {
@@ -38,7 +23,7 @@ if ($resAttractions) {
     $totalAttractions = (int)$row['total'];
 }
 
-// Query 2: Get Total Number of Categories in Database
+// Total categories count
 $sqlCategories = "SELECT COUNT(*) AS total FROM `category`";
 $resCategories = $conn->query($sqlCategories);
 if ($resCategories) {
@@ -46,7 +31,7 @@ if ($resCategories) {
     $totalCategories = (int)$row['total'];
 }
 
-// Query 3: Get Active Attractions Count (with valid coordinates)
+// Attractions with coordinates count
 $sqlActive = "SELECT COUNT(*) AS total FROM `attraction` WHERE `latitude` IS NOT NULL AND `longitude` IS NOT NULL AND `latitude` != 0";
 $resActive = $conn->query($sqlActive);
 if ($resActive) {
@@ -57,9 +42,7 @@ if ($activeAttractions == 0 && $totalAttractions > 0) {
     $activeAttractions = $totalAttractions; // Fallback count
 }
 
-// -------------------------------------------------------------------
-// Step 4: FETCH RECENTLY ADDED ATTRACTIONS (LATEST 5 ROWS)
-// -------------------------------------------------------------------
+// Fetch the latest 5 added attractions
 $recentAttractions = [];
 $sqlRecent = "SELECT a.attraction_id, a.name, a.location, a.entrance_fee, c.category_name 
               FROM `attraction` a 
@@ -74,16 +57,14 @@ if ($resRecent && $resRecent->num_rows > 0) {
     }
 }
 
-// Step 5: Define Page Title
+// Page title
 $pageTitle = "Admin Dashboard - NearTrip Local Tourist Day-Visit Planner";
 
-// Step 6: Include Modular Navigation Header Component
+// Navigation header
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     ADMIN DASHBOARD SECTION
-     =================================================================== -->
+<!-- Main dashboard content -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 1200px; margin: 0 auto;">
         
@@ -103,9 +84,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- ===============================================================
-             1. SUMMARY CARDS GRID (3 COLUMNS DESKTOP / 2 TABLET / 1 MOBILE)
-             =============================================================== -->
+        <!-- Summary statistics cards -->
         <div class="admin-stats-row">
             
             <!-- Card 1: Total Attractions (Green #2D7D46) -->
@@ -161,9 +140,7 @@ include_once __DIR__ . '/../includes/header.php';
 
         </div>
 
-        <!-- ===============================================================
-             2. QUICK ADMINISTRATIVE ACTION BUTTONS BLOCK
-             =============================================================== -->
+        <!-- Quick action buttons -->
         <div class="admin-panel-card" style="margin-top: 32px;">
             <h3 class="panel-card-title">
                 <i class="fas fa-bolt"></i> Quick Actions
@@ -192,9 +169,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- ===============================================================
-             3. RECENTLY ADDED ATTRACTIONS DATA TABLE
-             =============================================================== -->
+        <!-- Recently added attractions table -->
         <div class="admin-panel-card" style="margin-top: 32px;">
             <div class="panel-card-header flex-between">
                 <h3 class="panel-card-title" style="margin: 0;">
@@ -268,6 +243,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Modular Footer Component
+// Page footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

@@ -1,34 +1,20 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Admin User & Role Management Page (admin/users.php)
- * 
- * Database: neartrip
- * Table: administrator
- * 
- * Requirement Coverage:
- * - List all registered user accounts with Name (Username) and Email
- * - Role Management: Toggle account role between 'admin' and 'user'
- * - User Account Deletion with safety guard against self-deletion
- * - SE-11: Admin Role Session Guard
- * - FR-ADM-07, FR-ADM-08: Flash notification messages
- * ===================================================================
+ * User and role management page.
+ * Allows administrators to view user accounts, change user roles, and delete accounts.
  */
 
-// Step 1: Include Config & Auth Guard
+// Include database configuration and authentication helper
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: Enforce Admin Security Guard (SE-11)
+// Ensure only logged-in administrators can access this page
 requireAdmin();
 
 $currentAdminId = isset($_SESSION['admin_id']) ? (int)$_SESSION['admin_id'] : 0;
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// -------------------------------------------------------------------
-// 1. PROCESS ROLE TOGGLE ACTION (?action=toggle_role&id=X&new_role=admin/user)
-// -------------------------------------------------------------------
+// Handle account role change
 if ($action === 'toggle_role' && $userId > 0) {
     $newRole = isset($_GET['new_role']) ? trim($_GET['new_role']) : '';
     
@@ -61,15 +47,13 @@ if ($action === 'toggle_role' && $userId > 0) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// 2. PROCESS USER DELETION ACTION (?action=delete&id=X)
-// -------------------------------------------------------------------
+// Handle account deletion
 if ($action === 'delete' && $userId > 0) {
     if ($userId === $currentAdminId) {
         $_SESSION['message'] = "Security Warning: You cannot delete your own active logged-in account!";
         $_SESSION['message_type'] = "error";
     } else {
-        // Fetch user info for notification message
+        // Fetch username to display in notification
         $fetchSql = "SELECT `username` FROM `administrator` WHERE `admin_id` = ? LIMIT 1";
         $fetchStmt = $conn->prepare($fetchSql);
         $targetUser = null;
@@ -109,9 +93,7 @@ if ($action === 'delete' && $userId > 0) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// 3. FETCH ALL REGISTERED USER ACCOUNTS FROM DATABASE
-// -------------------------------------------------------------------
+// Fetch all registered user accounts from database
 $usersList = [];
 $listSql = "SELECT `admin_id`, `username`, `email`, `role`, `created_at` 
             FROM `administrator` 
@@ -124,18 +106,16 @@ if ($listResult && $listResult->num_rows > 0) {
     }
 }
 
-// Step 4: Define Page Title & Include Header Component
+// Page title and header
 $pageTitle = "User & Role Management - NearTrip Admin";
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     USER & ROLE MANAGEMENT SECTION
-     =================================================================== -->
+<!-- User and role management section -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 1200px; margin: 0 auto;">
         
-        <!-- Flash Notification Banner -->
+        <!-- Flash message banner -->
         <?php if (isset($_SESSION['message'])): ?>
             <div class="admin-flash-banner alert-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'success' : 'danger'; ?>">
                 <i class="fas fa-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'circle-check' : 'circle-exclamation'; ?>"></i>
@@ -163,7 +143,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- Users Directory Table Card -->
+        <!-- Registered users table -->
         <div class="admin-panel-card" style="margin-top: 24px;">
             <div class="panel-card-header flex-between" style="margin-bottom: 20px;">
                 <h3 class="panel-card-title" style="margin: 0;">
@@ -229,7 +209,7 @@ include_once __DIR__ . '/../includes/header.php';
                                     <td style="text-align: right;">
                                         <div class="table-action-btns" style="gap: 8px;">
                                             
-                                            <!-- Toggle Role Action Button -->
+                                            <!-- Change role -->
                                             <?php if ($isSelf): ?>
                                                 <span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 6px 10px;">Protected</span>
                                             <?php else: ?>
@@ -251,7 +231,7 @@ include_once __DIR__ . '/../includes/header.php';
                                                     </a>
                                                 <?php endif; ?>
 
-                                                <!-- Delete User Account Button -->
+                                                <!-- Delete account -->
                                                 <a href="users.php?action=delete&id=<?php echo (int)$user['admin_id']; ?>" 
                                                    class="tbl-btn delete" 
                                                    onclick="return confirm('Are you sure you want to delete account \'<?php echo htmlspecialchars(addslashes($user['username'])); ?>\'?');" 
@@ -280,6 +260,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Render footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

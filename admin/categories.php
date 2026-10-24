@@ -1,23 +1,13 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Admin Categories Management Page (admin/categories.php)
- * 
- * Database: neartrip
- * Table: category, attraction
- * 
- * Requirement Coverage:
- * - Manage Categories CRUD (Create, Read, Update, Delete)
- * - SE-11: Admin Role Session Security Guard
- * - FR-ADM-07, FR-ADM-08: Flash notification messages
- * ===================================================================
+ * Category management page.
+ * Allows administrators to view, create, edit, and delete attraction categories.
  */
 
-// Step 1: Include Config & Auth Guard
+// Include database configuration and authentication helper
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: Enforce Admin Security Guard (SE-11)
+// Ensure only logged-in administrators can access this page
 requireAdmin();
 
 // Initialize variables
@@ -28,9 +18,7 @@ $categoryNameInput = '';
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
 $catId  = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// -------------------------------------------------------------------
-// 1. PROCESS DELETE CATEGORY ACTION
-// -------------------------------------------------------------------
+// Delete category
 if ($action === 'delete' && $catId > 0) {
     // Check if category exists
     $checkSql = "SELECT `category_name` FROM `category` WHERE `category_id` = ? LIMIT 1";
@@ -42,7 +30,7 @@ if ($action === 'delete' && $catId > 0) {
         if ($res && $res->num_rows === 1) {
             $catData = $res->fetch_assoc();
             
-            // Step 1: Update linked attractions to NULL category_id to prevent foreign key errors
+            // Remove category link from attractions before deleting to avoid errors
             $unlinkSql = "UPDATE `attraction` SET `category_id` = NULL WHERE `category_id` = ?";
             $unlinkStmt = $conn->prepare($unlinkSql);
             if ($unlinkStmt) {
@@ -51,7 +39,7 @@ if ($action === 'delete' && $catId > 0) {
                 $unlinkStmt->close();
             }
 
-            // Step 2: Delete Category Record
+            // Delete category record
             $delSql = "DELETE FROM `category` WHERE `category_id` = ?";
             $delStmt = $conn->prepare($delSql);
             if ($delStmt) {
@@ -70,9 +58,7 @@ if ($action === 'delete' && $catId > 0) {
     }
 }
 
-// -------------------------------------------------------------------
-// 2. PROCESS EDIT CATEGORY FETCH
-// -------------------------------------------------------------------
+// Load category data for editing
 if ($action === 'edit' && $catId > 0) {
     $editSql = "SELECT * FROM `category` WHERE `category_id` = ? LIMIT 1";
     $editStmt = $conn->prepare($editSql);
@@ -88,9 +74,7 @@ if ($action === 'edit' && $catId > 0) {
     }
 }
 
-// -------------------------------------------------------------------
-// 3. PROCESS FORM SUBMISSION (ADD OR UPDATE CATEGORY)
-// -------------------------------------------------------------------
+// Handle form submission for adding or updating a category
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $categoryNameInput = isset($_POST['category_name']) ? trim($_POST['category_name']) : '';
     $formCatId        = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
@@ -100,7 +84,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     } elseif (mb_strlen($categoryNameInput) < 2) {
         $error = "Category Name must be at least 2 characters long.";
     } else {
-        // CASE A: UPDATE EXISTING CATEGORY
+        // Update existing category
         if ($formCatId > 0) {
             // Check for duplicate name
             $dupSql = "SELECT `category_id` FROM `category` WHERE `category_name` = ? AND `category_id` != ? LIMIT 1";
@@ -128,7 +112,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
                 }
             }
         } 
-        // CASE B: ADD NEW CATEGORY
+        // Add new category
         else {
             // Check for duplicate name
             $dupSql = "SELECT `category_id` FROM `category` WHERE `category_name` = ? LIMIT 1";
@@ -159,9 +143,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') 
     }
 }
 
-// -------------------------------------------------------------------
-// 4. FETCH ALL CATEGORIES WITH LINKED ATTRACTIONS COUNT
-// -------------------------------------------------------------------
+// Fetch all categories with total attraction count
 $categories = [];
 $listSql = "SELECT c.category_id, c.category_name, COUNT(a.attraction_id) AS total_attractions 
             FROM `category` c 
@@ -176,18 +158,16 @@ if ($listRes && $listRes->num_rows > 0) {
     }
 }
 
-// Step 5: Define Page Title & Include Header Component
+// Page title and header
 $pageTitle = "Manage Categories - NearTrip Admin";
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     CATEGORIES MANAGEMENT SECTION
-     =================================================================== -->
+<!-- Categories management section -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 1200px; margin: 0 auto;">
         
-        <!-- Flash Notification Banner -->
+        <!-- Flash message banner -->
         <?php if (isset($_SESSION['message'])): ?>
             <div class="admin-flash-banner alert-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'success' : 'danger'; ?>">
                 <i class="fas fa-<?php echo isset($_SESSION['message_type']) && $_SESSION['message_type'] === 'success' ? 'circle-check' : 'circle-exclamation'; ?>"></i>
@@ -206,7 +186,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <!-- Page Header Banner -->
+        <!-- Page header banner -->
         <div class="admin-welcome-banner">
             <div>
                 <span class="role-badge admin">
@@ -225,10 +205,10 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- 2-COLUMN GRID: FORM CARD LEFT (~35%), TABLE CARD RIGHT (~65%) -->
+        <!-- Category form and table layout -->
         <div class="admin-categories-grid">
             
-            <!-- LEFT COLUMN: ADD / EDIT CATEGORY FORM CARD -->
+            <!-- Add or edit category form -->
             <div class="admin-panel-card">
                 <h3 class="panel-card-title" style="font-size: 1.15rem;">
                     <?php if ($editCategory): ?>
@@ -274,7 +254,7 @@ include_once __DIR__ . '/../includes/header.php';
                 </form>
             </div>
 
-            <!-- RIGHT COLUMN: CATEGORIES LIST DATA TABLE -->
+            <!-- Categories data table -->
             <div class="admin-panel-card">
                 <div class="panel-card-header flex-between" style="margin-bottom: 16px;">
                     <h3 class="panel-card-title" style="margin: 0; font-size: 1.15rem;">
@@ -299,7 +279,7 @@ include_once __DIR__ . '/../includes/header.php';
                                         <td><strong>#<?php echo (int)$cat['category_id']; ?></strong></td>
                                         <td>
                                             <strong style="color: var(--text-dark); font-size: 0.98rem;">
-                                                <?php echo htmlspecialchars($cat['category_name']); ?>
+                                                 <?php echo htmlspecialchars($cat['category_name']); ?>
                                             </strong>
                                         </td>
                                         <td>
@@ -309,15 +289,15 @@ include_once __DIR__ . '/../includes/header.php';
                                         </td>
                                         <td style="text-align: right;">
                                             <div class="table-action-btns">
-                                                <!-- Filter Places by Category -->
+                                                <!-- View destinations in category -->
                                                 <a href="../places.php?category=<?php echo urlencode($cat['category_name']); ?>" class="tbl-btn view" title="View Destinations in Category">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
-                                                <!-- Edit Category -->
+                                                <!-- Edit category -->
                                                 <a href="categories.php?action=edit&id=<?php echo (int)$cat['category_id']; ?>" class="tbl-btn edit" title="Edit Category">
                                                     <i class="fas fa-pen-to-square"></i>
                                                 </a>
-                                                <!-- Delete Category -->
+                                                <!-- Delete category -->
                                                 <a href="categories.php?action=delete&id=<?php echo (int)$cat['category_id']; ?>" class="tbl-btn delete" onclick="return confirm('Are you sure you want to delete category \'<?php echo htmlspecialchars(addslashes($cat['category_name'])); ?>\'? Linked attractions will revert to general category.');" title="Delete Category">
                                                     <i class="fas fa-trash-can"></i>
                                                 </a>
@@ -343,6 +323,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Render footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

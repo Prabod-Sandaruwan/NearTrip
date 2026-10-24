@@ -1,23 +1,16 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Delete Attraction Confirmation & Execution Page (admin/delete_attraction.php)
- * 
- * Requirement Coverage:
- * - FR-ADM-04: Delete attraction record with confirmation step
- * - SE-05: Prepared statement DELETE query
- * - SE-11: Admin role session security guard
- * ===================================================================
+ * Delete attraction page.
+ * Displays a confirmation screen and removes the attraction from the database.
  */
 
-// Step 1: Include Database Config & Auth Helper
+// Include database configuration and authentication helper
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: Enforce Admin Security Guard (SE-11)
+// Ensure only logged-in administrators can access this page
 requireAdmin();
 
-// Capture Attraction ID from GET or POST
+// Get attraction ID from query string or form data
 $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 
 if ($id <= 0) {
@@ -27,9 +20,7 @@ if ($id <= 0) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// Step 3: FETCH ATTRACTION DETAILS TO VERIFY RECORD EXISTENCE
-// -------------------------------------------------------------------
+// Fetch attraction record to ensure it exists
 $fetchSql = "SELECT * FROM `attraction` WHERE `attraction_id` = ? LIMIT 1";
 $stmt = $conn->prepare($fetchSql);
 $attraction = null;
@@ -51,9 +42,7 @@ if (!$attraction) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// Step 4: METHOD 2 - PROCESS CONFIRMED DELETION (POST)
-// -------------------------------------------------------------------
+// Handle confirmed deletion request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete']) && $_POST['confirm_delete'] === '1') {
     
     $deleteSql = "DELETE FROM `attraction` WHERE `attraction_id` = ?";
@@ -63,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete']) && 
         $delStmt->bind_param("i", $id);
         if ($delStmt->execute()) {
             $delStmt->close();
-            // Set success flash message and redirect to attractions list
+            // Set success message and redirect back to attraction list
             $_SESSION['message'] = "Attraction '" . $attraction['name'] . "' deleted permanently!";
             $_SESSION['message_type'] = "success";
             header("Location: attractions.php");
@@ -77,21 +66,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_delete']) && 
     }
 }
 
-// Step 5: Define Page Title & Include Header Component
+// Page title and header
 $pageTitle = "Confirm Delete - " . htmlspecialchars($attraction['name']);
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     METHOD 1: CONFIRMATION DIALOG INTERFACE
-     =================================================================== -->
+<!-- Delete confirmation dialog -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 600px; margin: 0 auto; text-align: center;">
         
-        <!-- Confirmation Card Container -->
+        <!-- Confirmation card -->
         <div class="admin-panel-card" style="padding: 48px 32px; border-top: 5px solid #EF4444;">
             
-            <!-- Warning Icon -->
+            <!-- Warning icon -->
             <div style="width: 70px; height: 70px; border-radius: 50%; background: #FEE2E2; color: #EF4444; display: inline-flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 20px;">
                 <i class="fas fa-triangle-exclamation"></i>
             </div>
@@ -105,17 +92,17 @@ include_once __DIR__ . '/../includes/header.php';
                 <i class="fas fa-circle-exclamation"></i> Warning: This action cannot be undone! The destination will be removed from all maps and day planners.
             </div>
 
-            <!-- Confirmation Action Form -->
+            <!-- Delete action form -->
             <form action="delete_attraction.php?id=<?php echo $id; ?>" method="POST" style="display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;">
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                 <input type="hidden" name="confirm_delete" value="1">
                 
-                <!-- Danger Confirm Button -->
+                <!-- Delete button -->
                 <button type="submit" class="btn-action-danger" style="padding: 12px 28px; font-size: 0.95rem;">
                     <i class="fas fa-trash-can"></i> Yes, Delete Permanently
                 </button>
 
-                <!-- Cancel Button -->
+                <!-- Cancel button -->
                 <a href="attractions.php" class="quick-action-btn outline" style="padding: 12px 24px;">
                     Cancel
                 </a>
@@ -127,6 +114,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Render footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

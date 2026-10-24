@@ -1,23 +1,16 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Edit Attraction Page (admin/edit_attraction.php)
- * 
- * Requirement Coverage:
- * - FR-ADM-03, FR-MGT-02, FR-MGT-03, FR-MGT-04: Edit & update attraction record
- * - SE-05: Server-side validation & prepared statement UPDATE
- * - SE-11: Admin role session security guard
- * ===================================================================
+ * Edit attraction page.
+ * Loads existing attraction data, validates input fields, and updates the record.
  */
 
-// Step 1: Include Database Config & Auth Helper
+// Include database configuration and authentication helper
 require_once __DIR__ . '/../includes/config.php';
 
-// Step 2: Enforce Admin Security Guard (SE-11)
+// Ensure only logged-in administrators can access this page
 requireAdmin();
 
-// Capture Attraction ID from GET or POST
+// Get attraction ID from query string or form data
 $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
 
 if ($id <= 0) {
@@ -27,9 +20,7 @@ if ($id <= 0) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// Step 3: FETCH EXISTING ATTRACTION DETAILS FROM DATABASE
-// -------------------------------------------------------------------
+// Fetch existing attraction details from the database
 $fetchSql = "SELECT * FROM `attraction` WHERE `attraction_id` = ? LIMIT 1";
 $fetchStmt = $conn->prepare($fetchSql);
 $attraction = null;
@@ -51,7 +42,7 @@ if (!$attraction) {
     exit();
 }
 
-// Initialize form values with existing database record
+// Populate initial form values with existing database record
 $errors = [];
 $name             = $attraction['name'];
 $categoryId       = $attraction['category_id'];
@@ -66,7 +57,7 @@ $travelTips       = $attraction['travel_tips'];
 $safetyGuidelines = $attraction['safety_guidelines'];
 $imageUrl         = $attraction['image_url'];
 
-// Step 4: Fetch Available Categories for Dropdown Selector
+// Fetch all categories for the dropdown list
 $categories = [];
 $catSql = "SELECT * FROM `category` ORDER BY `category_name` ASC";
 $catResult = $conn->query($catSql);
@@ -76,9 +67,7 @@ if ($catResult && $catResult->num_rows > 0) {
     }
 }
 
-// -------------------------------------------------------------------
-// Step 5: PROCESS UPDATE FORM SUBMISSION (POST)
-// -------------------------------------------------------------------
+// Handle form update submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Sanitize input values
@@ -95,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $safetyGuidelines = isset($_POST['safety_guidelines']) ? trim($_POST['safety_guidelines']) : '';
     $imageUrl         = isset($_POST['image_url']) ? trim($_POST['image_url']) : '';
 
-    // Validation Rules
+    // Validate form inputs
     if (empty($name)) {
         $errors['name'] = "Attraction Name is required.";
     } elseif (mb_strlen($name) < 3) {
@@ -126,9 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors['longitude'] = "Longitude must be a valid decimal number.";
     }
 
-    // ---------------------------------------------------------------
-    // Step 6: UPDATE DATABASE RECORD IF VALID
-    // ---------------------------------------------------------------
+    // Update database record if validation passes
     if (empty($errors)) {
         $latVal = ($latitude !== null) ? (float)$latitude : null;
         $lngVal = ($longitude !== null) ? (float)$longitude : null;
@@ -169,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($stmt->execute()) {
                 $stmt->close();
-                // Set success flash message and redirect to attractions list
+                // Set success message and redirect back to attraction list
                 $_SESSION['message'] = "Attraction '" . $name . "' updated successfully!";
                 $_SESSION['message_type'] = "success";
                 header("Location: attractions.php");
@@ -184,18 +171,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Step 7: Define Page Title & Include Header Component
+// Page title and header
 $pageTitle = "Edit Attraction - " . htmlspecialchars($attraction['name']);
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     EDIT ATTRACTION FORM SECTION
-     =================================================================== -->
+<!-- Edit attraction form section -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; background-color: #F8FAFC;">
     <div class="section-container" style="max-width: 900px; margin: 0 auto;">
         
-        <!-- Header Banner -->
+        <!-- Page header banner -->
         <div class="admin-welcome-banner">
             <div>
                 <span class="role-badge admin">
@@ -211,7 +196,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         </div>
 
-        <!-- General Error Alert -->
+        <!-- General error message -->
         <?php if (!empty($errors['general'])): ?>
             <div class="admin-flash-banner alert-danger" style="margin-top: 20px;">
                 <i class="fas fa-circle-exclamation"></i>
@@ -219,12 +204,12 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <!-- Form Card Container -->
+        <!-- Form card -->
         <div class="admin-panel-card" style="margin-top: 24px;">
             <form action="edit_attraction.php?id=<?php echo $id; ?>" method="POST" autocomplete="off" class="admin-form-grid">
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
 
-                <!-- 1. Attraction Name (Required) -->
+                <!-- Attraction name -->
                 <div class="form-group-full">
                     <label for="name" class="form-label">
                         Attraction Name <span class="required-star">*</span>
@@ -235,7 +220,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 2. Category Selector (Required) -->
+                <!-- Category -->
                 <div class="form-group-half">
                     <label for="category_id" class="form-label">
                         Category <span class="required-star">*</span>
@@ -253,7 +238,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 3. Location Address (Required) -->
+                <!-- Location address -->
                 <div class="form-group-half">
                     <label for="location" class="form-label">
                         Location Address <span class="required-star">*</span>
@@ -264,7 +249,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 4. Description (Required) -->
+                <!-- Description -->
                 <div class="form-group-full">
                     <label for="description" class="form-label">
                         Attraction Description <span class="required-star">*</span>
@@ -275,7 +260,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 5. Latitude (Optional) -->
+                <!-- Latitude -->
                 <div class="form-group-half">
                     <label for="latitude" class="form-label">
                         Latitude Coordinates (GPS)
@@ -286,7 +271,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 6. Longitude (Optional) -->
+                <!-- Longitude -->
                 <div class="form-group-half">
                     <label for="longitude" class="form-label">
                         Longitude Coordinates (GPS)
@@ -297,7 +282,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <?php endif; ?>
                 </div>
 
-                <!-- 7. Opening Hours (Optional) -->
+                <!-- Opening hours -->
                 <div class="form-group-half">
                     <label for="opening_hours" class="form-label">
                         Opening Hours
@@ -305,7 +290,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <input type="text" id="opening_hours" name="opening_hours" class="form-input" value="<?php echo htmlspecialchars($openingHours); ?>">
                 </div>
 
-                <!-- 8. Entrance Fee (Optional) -->
+                <!-- Entrance fee -->
                 <div class="form-group-half">
                     <label for="entrance_fee" class="form-label">
                         Entrance Fee
@@ -313,7 +298,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <input type="text" id="entrance_fee" name="entrance_fee" class="form-input" value="<?php echo htmlspecialchars($entranceFee); ?>">
                 </div>
 
-                <!-- 9. Image URL / Asset Path (Optional) -->
+                <!-- Image URL or path -->
                 <div class="form-group-full">
                     <label for="image_url" class="form-label">
                         Image URL / File Path
@@ -321,7 +306,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <input type="text" id="image_url" name="image_url" class="form-input" value="<?php echo htmlspecialchars($imageUrl); ?>">
                 </div>
 
-                <!-- 10. Facilities & Amenities (Optional) -->
+                <!-- Facilities -->
                 <div class="form-group-full">
                     <label for="facilities" class="form-label">
                         Facilities & Amenities (Comma Separated)
@@ -329,7 +314,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <textarea id="facilities" name="facilities" rows="2" class="form-input"><?php echo htmlspecialchars($facilities); ?></textarea>
                 </div>
 
-                <!-- 11. Travel Tips (Optional) -->
+                <!-- Travel tips -->
                 <div class="form-group-full">
                     <label for="travel_tips" class="form-label">
                         Travel Tips & Best Time to Visit
@@ -337,7 +322,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <textarea id="travel_tips" name="travel_tips" rows="3" class="form-input"><?php echo htmlspecialchars($travelTips); ?></textarea>
                 </div>
 
-                <!-- 12. Safety Guidelines (Optional) -->
+                <!-- Safety guidelines -->
                 <div class="form-group-full">
                     <label for="safety_guidelines" class="form-label">
                         Safety Guidelines
@@ -345,7 +330,7 @@ include_once __DIR__ . '/../includes/header.php';
                     <textarea id="safety_guidelines" name="safety_guidelines" rows="3" class="form-input"><?php echo htmlspecialchars($safetyGuidelines); ?></textarea>
                 </div>
 
-                <!-- Form Action Buttons -->
+                <!-- Form action buttons -->
                 <div class="form-actions-full">
                     <button type="submit" class="btn-primary-action">
                         <i class="fas fa-arrows-rotate"></i> Update Attraction
@@ -362,6 +347,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Render footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

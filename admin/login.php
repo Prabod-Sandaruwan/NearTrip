@@ -1,21 +1,10 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Authentication Login & Registration Page (admin/login.php)
- * 
- * Requirement Coverage:
- * - FR-AUTH-01 to FR-AUTH-05: Email-based authentication & role detection
- * - User Sign Up (Registration) with secure password hashing
- * - SE-01 to SE-04: Secure password verification & input sanitization
- * - SE-07, SE-08: Session fixation protection & regeneration
- * ===================================================================
+ * Login and registration page.
+ * Handles user sign in, account registration, and session initialization.
  */
 
-// -------------------------------------------------------------------
-// 1. PAGE SETUP & SESSION GUARD
-// -------------------------------------------------------------------
-// Include database configuration & auth helper functions
+// Load database configuration and helpers
 require_once __DIR__ . '/../includes/config.php';
 
 // If user or admin is already logged in, redirect to their respective dashboard
@@ -47,16 +36,12 @@ if (isset($_SESSION['timeout_message'])) {
     unset($_SESSION['timeout_message']);
 }
 
-// -------------------------------------------------------------------
-// 2. POST FORM SUBMISSION PROCESSING (LOGIN VS REGISTER)
-// -------------------------------------------------------------------
+// Handle login and registration form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $action = isset($_POST['action']) ? $_POST['action'] : 'login';
 
-    // ---------------------------------------------------------------
-    // CASE A: USER REGISTRATION / SIGN UP
-    // ---------------------------------------------------------------
+    // Handle user registration
     if ($action === 'register') {
         $username        = isset($_POST['username']) ? trim($_POST['username']) : '';
         $email           = isset($_POST['email']) ? trim($_POST['email']) : '';
@@ -104,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if ($insertStmt->execute()) {
                             $newUserId = $insertStmt->insert_id;
 
-                            // Prevent Session Fixation Attack (SE-07)
+                            // Prevent session fixation attack
                             session_regenerate_id(true);
 
                             // Auto login the new user
@@ -132,9 +117,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } 
     
-    // ---------------------------------------------------------------
-    // CASE B: USER / ADMIN SIGN IN (LOGIN)
-    // ---------------------------------------------------------------
+    // Handle user and admin login
     else {
         $email    = isset($_POST['email']) ? trim($_POST['email']) : '';
         $password = isset($_POST['password']) ? trim($_POST['password']) : '';
@@ -162,7 +145,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if (password_verify($password, $userRow['password_hash'])) {
                         
-                        // Prevent Session Fixation Attack (SE-07)
+                        // Prevent session fixation attack
                         session_regenerate_id(true);
 
                         // Set Session Variables
@@ -174,7 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                         $stmt->close();
 
-                        // Role-Based Redirect Logic
+                        // Redirect based on role
                         if ($userRow['role'] === 'admin') {
                             header("Location: dashboard.php");
                         } else {
@@ -198,14 +181,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Define page title prior to including header
+// Page title
 $pageTitle = ($activeTab === 'register') ? "Sign Up - NearTrip" : "Login - NearTrip";
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     AUTHENTICATION CARD SECTION (TABBED LOGIN & SIGN UP)
-     =================================================================== -->
+<!-- Authentication card with login and register tabs -->
 <main class="auth-page-section">
     <div class="auth-card-container">
         
@@ -243,14 +224,12 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <!-- ===============================================================
-             TAB 1: LOGIN FORM
-             =============================================================== -->
+        <!-- Login form -->
         <?php if ($activeTab === 'login'): ?>
             <form action="login.php" method="POST" class="auth-form" autocomplete="off">
                 <input type="hidden" name="action" value="login">
                 
-                <!-- Email Input Field -->
+                <!-- Email field -->
                 <div class="form-group">
                     <label for="login_email" class="form-label">
                         <i class="fas fa-envelope"></i> Email Address
@@ -264,7 +243,7 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
 
-                <!-- Password Input Field -->
+                <!-- Password field -->
                 <div class="form-group">
                     <label for="login_password" class="form-label">
                         <i class="fas fa-key"></i> Password
@@ -277,20 +256,18 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
 
-                <!-- Submit Button -->
+                <!-- Submit button -->
                 <button type="submit" class="btn-auth-submit">
                     <i class="fas fa-right-to-bracket"></i> Login
                 </button>
             </form>
 
-        <!-- ===============================================================
-             TAB 2: SIGN UP / REGISTRATION FORM
-             =============================================================== -->
+        <!-- Registration form -->
         <?php else: ?>
             <form action="login.php" method="POST" class="auth-form" autocomplete="off">
                 <input type="hidden" name="action" value="register">
 
-                <!-- Username Field -->
+                <!-- Username field -->
                 <div class="form-group">
                     <label for="reg_username" class="form-label">
                         <i class="fas fa-user"></i> Username
@@ -304,7 +281,7 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
                 
-                <!-- Email Address Field -->
+                <!-- Email address field -->
                 <div class="form-group">
                     <label for="reg_email" class="form-label">
                         <i class="fas fa-envelope"></i> Email Address
@@ -318,7 +295,7 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
 
-                <!-- Password Field -->
+                <!-- Password field -->
                 <div class="form-group">
                     <label for="reg_password" class="form-label">
                         <i class="fas fa-lock"></i> Password (Min 6 chars)
@@ -331,7 +308,7 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
 
-                <!-- Confirm Password Field -->
+                <!-- Confirm password field -->
                 <div class="form-group">
                     <label for="reg_confirm_password" class="form-label">
                         <i class="fas fa-shield-halved"></i> Confirm Password
@@ -344,7 +321,7 @@ include_once __DIR__ . '/../includes/header.php';
                            required>
                 </div>
 
-                <!-- Submit Button -->
+                <!-- Submit button -->
                 <button type="submit" class="btn-auth-submit">
                     <i class="fas fa-user-plus"></i> Create Account
                 </button>
@@ -355,6 +332,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Page footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>
