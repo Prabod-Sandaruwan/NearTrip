@@ -1,26 +1,19 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * User Account Profile & Password Settings Page (user/profile.php)
- * 
- * Requirement Coverage:
- * - SE-11: Route Guard (Logged-in user/admin required)
- * - Profile Info Update (Username & Email) with session refresh
- * - Password Change with Current Password verification & hashing
- * ===================================================================
+ * User profile and password settings page.
+ * Allows users to update their username, email, and password.
  */
 
 require_once __DIR__ . '/../includes/config.php';
 
-// Enforce authentication guard
+// Require user login
 requireLogin();
 
 $userId = (int)$_SESSION['admin_id'];
 $errorMessage = "";
 $successMessage = "";
 
-// 1. Fetch current user data from database
+// Fetch current user data from database
 $fetchSql = "SELECT `admin_id`, `username`, `email`, `password_hash`, `role` FROM `administrator` WHERE `admin_id` = ? LIMIT 1";
 $stmt = $conn->prepare($fetchSql);
 $currentUser = null;
@@ -39,13 +32,11 @@ if (!$currentUser) {
     die("User record not found.");
 }
 
-// 2. Process Form Submissions
+// Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formAction = isset($_POST['form_action']) ? $_POST['form_action'] : '';
 
-    // ---------------------------------------------------------------
-    // ACTION 1: UPDATE PROFILE INFO (Username & Email)
-    // ---------------------------------------------------------------
+    // Update profile details (username and email)
     if ($formAction === 'update_profile') {
         $newUsername = isset($_POST['username']) ? trim($_POST['username']) : '';
         $newEmail    = isset($_POST['email']) ? trim($_POST['email']) : '';
@@ -93,9 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ---------------------------------------------------------------
-    // ACTION 2: CHANGE PASSWORD
-    // ---------------------------------------------------------------
+    // Change account password
     elseif ($formAction === 'change_password') {
         $currentPassword = isset($_POST['current_password']) ? trim($_POST['current_password']) : '';
         $newPassword     = isset($_POST['new_password']) ? trim($_POST['new_password']) : '';
@@ -128,16 +117,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Define Page Title
+// Page title
 $pageTitle = "Account Settings & Profile - NearTrip";
 
-// Include Navigation Header
+// Navigation header
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     USER PROFILE & ACCOUNT SETTINGS PAGE
-     =================================================================== -->
+<!-- Main profile section -->
 <main class="dashboard-page-section" style="padding: 130px 20px 80px 20px; min-height: 85vh;">
     <div class="section-container" style="max-width: 900px; margin: 0 auto;">
 
@@ -179,7 +166,7 @@ include_once __DIR__ . '/../includes/header.php';
             </div>
         <?php endif; ?>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 24px;">
+        <div class="user-profile-grid">
             
             <!-- Card 1: Profile Information -->
             <div class="admin-panel-card" style="background: #FFFFFF; border-radius: 16px; border: 1px solid #E2E8F0; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
@@ -296,6 +283,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Page footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>

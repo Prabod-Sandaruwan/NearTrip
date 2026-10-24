@@ -1,22 +1,16 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * User Explorer Dashboard Page (user/dashboard.php)
- * 
- * Requirement Coverage:
- * - SE-11: Route Guard (User role required)
- * - User Trip Planning Quick Actions Grid
- * ===================================================================
+ * User dashboard page.
+ * Displays saved itineraries and quick access links for registered users.
  */
 
-// Include config and auth functions
+// Load database configuration and helpers
 require_once __DIR__ . '/../includes/config.php';
 
-// Enforce User Role Guard (SE-11)
+// Require user login to view this page
 requireUser();
 
-// Define page title
+// Page title
 $pageTitle = "My Explorer Dashboard - NearTrip";
 
 // Fetch saved itineraries for current user
@@ -41,13 +35,11 @@ if ($savedStmt) {
     $savedStmt->close();
 }
 
-// Include Navigation Header
+// Navigation header
 include_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- ===================================================================
-     USER EXPLORER DASHBOARD SECTION
-     =================================================================== -->
+<!-- Main dashboard content -->
 <main class="dashboard-page-section">
     <div class="section-container">
         
@@ -64,7 +56,7 @@ include_once __DIR__ . '/../includes/header.php';
         <h3 class="dashboard-section-heading" style="margin-top: 30px;"><i class="fas fa-bookmark"></i> My Saved Tours & Day Plans</h3>
 
         <?php if (!empty($savedItineraries)): ?>
-            <div class="saved-tours-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 40px;">
+            <div class="saved-tours-grid">
                 <?php foreach ($savedItineraries as $tour): ?>
                     <div class="dashboard-action-card" style="border-left: 4px solid #2D7D46;">
                         <div class="action-card-header" style="justify-content: space-between;">
@@ -76,9 +68,12 @@ include_once __DIR__ . '/../includes/header.php';
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin: 8px 0 16px 0;">
                             <?php echo htmlspecialchars($tour['description']); ?>
                         </p>
-                        <div style="display: flex; gap: 10px;">
-                            <a href="../plan.php?load_saved=<?php echo $tour['itinerary_id']; ?>" class="btn-action-primary" style="flex: 1; font-size: 0.85rem;">
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <a href="../plan.php?load_saved=<?php echo $tour['itinerary_id']; ?>" class="btn-action-primary" style="flex: 1; font-size: 0.85rem; padding: 8px 10px; justify-content: center;">
                                 <i class="fas fa-folder-open"></i> Load Plan
+                            </a>
+                            <a href="../map.php?itinerary_id=<?php echo $tour['itinerary_id']; ?>" class="btn-action-secondary" style="flex: 1; font-size: 0.85rem; background: #059669; color: #FFFFFF; padding: 8px 10px; justify-content: center; text-decoration: none;" title="View this tour route on the interactive map">
+                                <i class="fas fa-map-location-dot"></i> View on Map
                             </a>
                             <a href="../plan.php?delete_saved=<?php echo $tour['itinerary_id']; ?>" class="btn-action-danger" style="font-size: 0.85rem; padding: 8px 12px;" onclick="return confirm('Delete this saved tour?');" title="Delete Saved Tour">
                                 <i class="fas fa-trash-can"></i>
@@ -181,6 +176,6 @@ include_once __DIR__ . '/../includes/header.php';
 </main>
 
 <?php
-// Include Footer Component
+// Page footer
 include_once __DIR__ . '/../includes/footer.php';
 ?>
