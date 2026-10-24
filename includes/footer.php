@@ -1,23 +1,19 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Global Footer Component with Quick Links (includes/footer.php)
- * ===================================================================
+ * Global footer component.
+ * Displays footer links, social links, and copyright info.
  */
 
 $inSubfolderFooter = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false || strpos($_SERVER['PHP_SELF'], '/user/') !== false);
 $footerPrefix = isset($prefix) ? $prefix : ($inSubfolderFooter ? '../' : '');
 ?>
-    <!-- ===================================================================
-         FOOTER SECTION (DARK FOOTER WITH QUICK LINKS & CONTACT INFO)
-         =================================================================== -->
+    <!-- Footer -->
     <footer class="footer">
         <div class="footer-container">
             
             <div class="footer-grid">
                 
-                <!-- Column 1: Brand & Tagline -->
+                <!-- Brand and about -->
                 <div class="footer-col">
                     <div class="footer-brand">
                         <img src="<?php echo $footerPrefix; ?>assets/logo.png" alt="NearTrip Logo">
@@ -32,7 +28,7 @@ $footerPrefix = isset($prefix) ? $prefix : ($inSubfolderFooter ? '../' : '');
                     </div>
                 </div>
 
-                <!-- Column 2: Quick Links -->
+                <!-- Quick navigation links -->
                 <div class="footer-col">
                     <h4 class="footer-col-title">Quick Links</h4>
                     <ul class="footer-links">
@@ -44,7 +40,7 @@ $footerPrefix = isset($prefix) ? $prefix : ($inSubfolderFooter ? '../' : '');
                     </ul>
                 </div>
 
-                <!-- Column 3: Explore Categories -->
+                <!-- Attraction category links -->
                 <div class="footer-col">
                     <h4 class="footer-col-title">Attractions</h4>
                     <ul class="footer-links">
@@ -56,7 +52,7 @@ $footerPrefix = isset($prefix) ? $prefix : ($inSubfolderFooter ? '../' : '');
                     </ul>
                 </div>
 
-                <!-- Column 4: Contact & Local Coverage -->
+                <!-- Coverage area details -->
                 <div class="footer-col">
                     <h4 class="footer-col-title">Local Coverage</h4>
                     <ul class="footer-info-list">
@@ -68,7 +64,7 @@ $footerPrefix = isset($prefix) ? $prefix : ($inSubfolderFooter ? '../' : '');
 
             </div>
 
-            <!-- Copyright Line -->
+            <!-- Copyright notice -->
             <div class="footer-bottom">
                 <p>&copy; 2026 NearTrip. All rights reserved. | Local Tourist Day-Visit Planner</p>
             </div>

@@ -1,9 +1,7 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Database Connection Configuration (includes/config.php)
- * ===================================================================
+ * Database connection setup.
+ * Connects to the NearTrip MySQL database.
  */
 
 define('DB_SERVER', '127.0.0.1');

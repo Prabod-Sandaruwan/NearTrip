@@ -1,12 +1,7 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Reusable "No Results" & "Not Found" Component (no_results.php)
- * 
- * Requirement: FR-PL-04
- * Component used for empty states, missing search results, and 404 errors.
- * ===================================================================
+ * Empty state component.
+ * Displays a friendly message when no items or search results are found.
  */
 
 // Default configuration with fallback values

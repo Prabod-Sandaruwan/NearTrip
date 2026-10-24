@@ -1,22 +1,16 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Global Navigation Header Component (includes/header.php)
- * 
- * Requirement Coverage:
- * - Role-Based Navigation Menu (Admin, User, Guest)
- * - User Greeting ("Welcome, [Username]!")
- * ===================================================================
+ * Navigation header component.
+ * Displays the website header and navigation menu based on user role.
  */
 
 require_once __DIR__ . '/config.php';
 
-// Resolve path prefix for subfolder calls (admin/ or user/)
+// Adjust path if page is inside a subfolder (admin/ or user/)
 $inSubfolder = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false || strpos($_SERVER['PHP_SELF'], '/user/') !== false);
 $prefix = $inSubfolder ? '../' : '';
 
-// Dynamic Greeting Logic
+// Set greeting message based on current time of day
 date_default_timezone_set('Asia/Colombo');
 $currentHour = (int) date('H');
 if ($currentHour >= 5 && $currentHour < 12) {
@@ -39,37 +33,36 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <title><?php echo isset($pageTitle) ? htmlspecialchars($pageTitle) : 'NearTrip - Explore Beautiful Places Near Dorawaka & Warakapola'; ?></title>
     <meta name="description" content="Help local tourists, family trip organizers, and history enthusiasts explore attractions within a 25km radius of Dorawaka, Warakapola.">
 
-    <!-- Google Fonts: Poppins (Clean, Modern Typography) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Font Awesome 6 (CDN - Icons Only) -->
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-    <!-- Master External Stylesheet (assets/css/style.css) -->
+    <!-- Main Stylesheet -->
     <link rel="stylesheet" href="<?php echo $prefix; ?>assets/css/style.css">
+    <?php if (isset($extraHead)) echo $extraHead; ?>
 </head>
 <body>
 
-    <!-- ===================================================================
-         HEADER / NAVIGATION BAR (PURE TRANSPARENT OVERLAY NAVBAR)
-         =================================================================== -->
+    <!-- Main Navigation Bar -->
     <header class="navbar">
         <div class="nav-container">
             
-            <!-- Logo & Brand Name -->
+            <!-- Logo and Brand Name -->
             <a href="<?php echo $prefix; ?>index.php" class="navbar-brand">
                 <span>NearTrip</span>
             </a>
 
-            <!-- Mobile Hamburger Toggle Checkbox -->
+            <!-- Mobile menu button -->
             <input type="checkbox" id="nav-toggle" class="nav-toggle">
             <label for="nav-toggle" class="nav-toggle-label" aria-label="Toggle navigation menu">
                 <span></span>
             </label>
 
-            <!-- Role-Based Navigation Menu -->
+            <!-- Navigation Links -->
             <nav class="nav-menu">
                 <ul>
                     <li><a href="<?php echo $prefix; ?>index.php" class="nav-link <?= ($currentPage == 'index.php') ? 'active' : '' ?>">Home</a></li>
@@ -95,7 +88,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <?php endif; ?>
                 </ul>
 
-                <!-- Session-Based Actions & User Greeting Badge -->
+                <!-- User Account Actions -->
                 <div class="nav-actions">
                     <?php if (isLoggedIn()): ?>
                         <a href="<?php echo $prefix; ?>user/profile.php" class="user-greeting-badge" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, 0.95); background: rgba(255, 255, 255, 0.12); padding: 8px 16px; border-radius: 50px; font-size: 0.88rem; transition: all 0.3s ease; border: 1px solid rgba(255, 255, 255, 0.2);" title="Manage Account Profile & Password">
