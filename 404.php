@@ -1,12 +1,6 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * 404 Page Not Found (404.php)
- * 
- * Requirement: FR-PL-04
- * Dedicated 404 handler page rendering the reusable no_results component.
- * ===================================================================
+ * 404 Page Not Found error page.
  */
 
 // Set HTTP response code to 404 Not Found

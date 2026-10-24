@@ -1,20 +1,19 @@
 <?php
 /**
- * ===================================================================
- * 
- * ===================================================================
+ * Safety guidelines and travel advice page.
+ * Displays emergency hotlines, general travel tips, and location-specific safety notes.
  */
 
-// Include config & DB connection
+// Load database configuration and helpers
 require_once __DIR__ . '/includes/config.php';
 
-// Define Page Title
+// Page title
 $pageTitle = "Safety Guidelines & Travel Tips - NearTrip Warakapola";
 
-// Include Navigation Header
+// Navigation header
 include_once __DIR__ . '/includes/header.php';
 
-// Fetch all attractions with safety guidelines & travel tips from DB (FR-SAFE-03, FR-SAFE-04)
+// Fetch attractions and their safety tips from database
 $attractionSafetyList = array();
 $sql = "SELECT a.attraction_id, a.name, a.location, a.safety_guidelines, a.travel_tips, a.image_url, c.category_name 
         FROM `attraction` a 
@@ -28,9 +27,7 @@ if ($result && $result->num_rows > 0) {
 }
 ?>
 
-<!-- ===================================================================
-     PAGE HERO BANNER
-     =================================================================== -->
+<!-- Hero banner -->
 <section class="page-hero">
     <div>
         <h1 class="page-hero-title"><i class="fas fa-shield-halved"></i> Safety & Travel Guidelines</h1>
@@ -38,15 +35,11 @@ if ($result && $result->num_rows > 0) {
     </div>
 </section>
 
-<!-- ===================================================================
-     MAIN SAFETY SECTION
-     =================================================================== -->
+<!-- Main safety section -->
 <main class="why-choose-us" style="padding: 60px 20px;">
     <div class="section-container" style="max-width: 1200px;">
 
-        <!-- ===============================================================
-             SECTION 1: EMERGENCY CONTACTS & HOTLINES (FR-SAFE-02)
-             =============================================================== -->
+        <!-- Emergency hotlines and contact numbers -->
         <div class="safety-section-block">
             <div class="safety-section-header">
                 <h2><i class="fas fa-phone-volume text-danger"></i> Emergency Hotlines & Support</h2>
@@ -100,9 +93,7 @@ if ($result && $result->num_rows > 0) {
             </div>
         </div>
 
-        <!-- ===============================================================
-             SECTION 2: GENERAL TRAVEL ADVICE & ETIQUETTE (FR-SAFE-01)
-             =============================================================== -->
+        <!-- General visitor guidelines and advice -->
         <div class="safety-section-block" style="margin-top: 50px;">
             <div class="safety-section-header">
                 <h2><i class="fas fa-lightbulb text-warning"></i> General Visitor Guidelines & Etiquette</h2>
@@ -158,9 +149,7 @@ if ($result && $result->num_rows > 0) {
             </div>
         </div>
 
-        <!-- ===============================================================
-             SECTION 3: ATTRACTION-SPECIFIC SAFETY WARNINGS FROM DB (FR-SAFE-03, FR-SAFE-04)
-             =============================================================== -->
+        <!-- Location-specific safety advisories -->
         <div class="safety-section-block" style="margin-top: 50px;">
             <div class="safety-section-header">
                 <h2><i class="fas fa-triangle-exclamation text-danger"></i> Location-Specific Safety Advisories</h2>
@@ -211,7 +200,7 @@ if ($result && $result->num_rows > 0) {
 
                         </div>
 
-                        <!-- Footer Action Link (FR-SAFE-04) -->
+                        <!-- Link to full details -->
                         <div class="loc-safety-footer">
                             <a href="details.php?id=<?php echo $item['attraction_id']; ?>" class="btn-view-loc-details">
                                 View Full Destination Details <i class="fas fa-arrow-right"></i>
@@ -228,6 +217,6 @@ if ($result && $result->num_rows > 0) {
 </main>
 
 <?php
-// Include Navigation Footer
+// Page footer
 include_once __DIR__ . '/includes/footer.php';
 ?>

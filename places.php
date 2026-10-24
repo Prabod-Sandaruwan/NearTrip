@@ -1,32 +1,24 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Destinations Page (places.php)
- * 
- * Requirement Coverage:
- * - Category Filtering (FR-CAT-01–04)
- * - Prepared SQL Statements (WHERE category_id = ?)
- * - Search & Filter Reset ("Show All")
- * - User-Friendly "No Results" Integration (FR-PL-04)
- * ===================================================================
+ * Destinations page.
+ * Displays all tourist attractions with category filters and search.
  */
 
-// Define page title prior to including header
+// Set page title
 $pageTitle = "Destinations - NearTrip Local Tourist Day-Visit Planner";
 
-// Include database configuration & connection to DB 'neartrip'
+// Connect to database
 require_once __DIR__ . '/includes/config.php';
 
-// Initialize itinerary session array if not exists
+// Initialize itinerary list in session if empty
 if (!isset($_SESSION['itinerary']) || !is_array($_SESSION['itinerary'])) {
     $_SESSION['itinerary'] = array();
 }
 
-// Include navigation header component
+// Include navigation header
 include_once __DIR__ . '/includes/header.php';
 
-// Fetch all categories for dropdown filter (FR-CAT-01)
+// Get all categories for the dropdown filter
 $categoryList = [];
 $catSql = "SELECT * FROM `category` ORDER BY `category_name` ASC";
 $catResult = $conn->query($catSql);
@@ -36,11 +28,11 @@ if ($catResult && $catResult->num_rows > 0) {
     }
 }
 
-// Fetch GET filter parameters
+// Get filter and search parameters
 $selectedCategoryId = isset($_GET['category_id']) ? (int)$_GET['category_id'] : 0;
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-// Handle category slug/name filter (e.g., places.php?category=waterfalls)
+// Handle category filter by name (e.g. ?category=waterfalls)
 if ($selectedCategoryId === 0 && isset($_GET['category']) && !empty($_GET['category'])) {
     $catSlug = trim($_GET['category']);
     foreach ($categoryList as $cat) {
@@ -51,7 +43,7 @@ if ($selectedCategoryId === 0 && isset($_GET['category']) && !empty($_GET['categ
     }
 }
 
-// Resolve selected category name
+// Get the name of the selected category
 $selectedCategoryName = '';
 if ($selectedCategoryId > 0) {
     foreach ($categoryList as $cat) {
@@ -62,7 +54,7 @@ if ($selectedCategoryId > 0) {
     }
 }
 
-// Dynamic SQL Query with Prepared Statements (FR-CAT-02, FR-CAT-03)
+// Query attractions based on category and search keyword
 if ($selectedCategoryId > 0 && !empty($searchQuery)) {
     $searchParam = "%" . $searchQuery . "%";
     $sql = "SELECT a.*, c.category_name 
@@ -104,9 +96,7 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
 }
 ?>
 
-    <!-- ===================================================================
-         PAGE HERO BANNER
-         =================================================================== -->
+    <!-- Page banner -->
     <section class="page-hero">
         <div>
             <h1 class="page-hero-title">Explore Destinations</h1>
@@ -114,9 +104,7 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
         </div>
     </section>
 
-    <!-- ===================================================================
-         DESTINATIONS LISTING & CATEGORY FILTERING SECTION
-         =================================================================== -->
+    <!-- Destinations listing and filter section -->
     <main class="why-choose-us" style="padding: 70px 20px;">
         <div class="section-container">
             
@@ -124,16 +112,16 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
                 <h2 class="section-title">WARAKAPOLA & DORAWAKA ATTRACTIONS</h2>
                 <p style="color: var(--text-muted); margin-top: 10px;">Filter attractions by category or search by keywords to plan your visit.</p>
                 
-                <!-- Category Filter & Search Bar Form (FR-CAT-01, FR-CAT-04) -->
+                <!-- Search and category filter form -->
                 <form action="places.php" method="GET" class="filter-search-bar">
                     
-                    <!-- Search Input -->
+                    <!-- Search input -->
                     <div class="filter-input-wrapper search-box">
                         <i class="fas fa-magnifying-glass search-icon"></i>
                         <input type="text" name="search" value="<?php echo htmlspecialchars($searchQuery); ?>" placeholder="Search destinations or keywords..." class="filter-control">
                     </div>
 
-                    <!-- Category Dropdown Select (FR-CAT-01) -->
+                    <!-- Category dropdown -->
                     <div class="filter-input-wrapper select-box">
                         <i class="fas fa-tags select-icon"></i>
                         <select name="category_id" class="filter-control select-control" onchange="this.form.submit();">
@@ -146,14 +134,14 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
                         </select>
                     </div>
 
-                    <!-- Action Buttons -->
+                    <!-- Filter action buttons -->
                     <div class="filter-actions">
                         <button type="submit" class="btn-filter-submit">
                             <i class="fas fa-filter"></i> Filter
                         </button>
 
                         <?php if ($selectedCategoryId > 0 || !empty($searchQuery)): ?>
-                            <!-- "Show All" Resets Filter (FR-CAT-04) -->
+                            <!-- Reset filters button -->
                             <a href="places.php" class="btn-filter-reset" title="Show All / Reset Filters">
                                 <i class="fas fa-rotate-left"></i> Show All
                             </a>
@@ -163,21 +151,21 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
                 </form>
             </div>
 
-            <!-- Dynamic Destinations Grid from DB 'neartrip' Table 'attraction' -->
+            <!-- Destinations grid -->
             <div class="destinations-grid">
                 
                 <?php if ($result && $result->num_rows > 0): ?>
                     <?php while ($row = $result->fetch_assoc()): ?>
                         <?php
-                            // Determine attraction image URL or fallback image
+                            // Set image path or use default
                             $rawImg = !empty($row['image_url']) ? $row['image_url'] : 'assets/hero.webp';
                             $cleanImg = ltrim($rawImg, '/');
                             $imagePath = file_exists(__DIR__ . '/' . $cleanImg) ? $cleanImg : 'assets/hero.webp';
                         ?>
-                        <!-- Destination Card -->
+                        <!-- Destination card -->
                         <div class="place-card">
                             
-                            <!-- Top Image Container with Optional Category Badge -->
+                            <!-- Card image and category badge -->
                             <div class="place-card-img-wrapper">
                                 <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($row['name']); ?>" class="place-card-img">
                                 <?php if (!empty($row['category_name'])): ?>
@@ -187,7 +175,7 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
                                 <?php endif; ?>
                             </div>
 
-                            <!-- Card Body -->
+                            <!-- Card details -->
                             <div class="place-card-body">
                                 <h3 class="place-card-title"><?php echo htmlspecialchars($row['name']); ?></h3>
                                 
@@ -221,7 +209,7 @@ if ($selectedCategoryId > 0 && !empty($searchQuery)) {
                         </div>
                     <?php endwhile; ?>
                 <?php else: ?>
-                    <!-- Empty State Fallback (FR-PL-04 Integration) -->
+                    <!-- Empty state when no destinations match search -->
                     <div style="grid-column: 1 / -1;">
                         <?php
                             if ($selectedCategoryId > 0 && !empty($searchQuery)) {

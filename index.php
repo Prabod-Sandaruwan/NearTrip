@@ -1,28 +1,30 @@
 <?php
-// Define page title prior to including header
-$pageTitle = "NearTrip - Explore Beautiful Places Near Dorawaka & Warakapola";
+/**
+ * Home page.
+ * Displays hero banner, quick step guide, about section, and why choose us features.
+ */
 
-// Include navigation header component
+// Set page title and render header
+$pageTitle = "NearTrip - Explore Beautiful Places Near Dorawaka & Warakapola";
 include_once __DIR__ . '/includes/header.php';
 ?>
 
     <section class="hero">
         <div class="hero-container">
             
-            <!-- Floating White Card (Exact Layout from Design Mockup) -->
+            <!-- Hero card -->
             <div class="hero-card">
                 
-                <!-- Dynamic Greeting (PHP Generated in header.php) -->
+                <!-- Greeting text -->
                 <h1 class="greeting-heading"><?php echo htmlspecialchars($greeting); ?></h1>
                 
-                <!-- Main Heading & Subtext -->
+                <!-- Main title and intro -->
                 <h2 class="hero-title">Explore beautiful places in Warakapola with NearTrip</h2>
                 <p class="hero-subtext">Discover amazing attractions near you. Plan your perfect day trip within 25km radius of Dorawaka & Warakapola!</p>
 
-                <!-- 4 Highlights Bar (Explore, Plan, Visit, Enjoy) -->
+                <!-- Step highlights bar -->
                 <div class="search-form-card steps-card-bar">
                     
-                    <!-- Item 1: Explore -->
                     <div class="form-field-group step-item">
                         <i class="fas fa-compass"></i>
                         <div class="field-content">
@@ -33,7 +35,6 @@ include_once __DIR__ . '/includes/header.php';
 
                     <div class="field-divider"></div>
 
-                    <!-- Item 2: Plan -->
                     <div class="form-field-group step-item">
                         <i class="fas fa-route"></i>
                         <div class="field-content">
@@ -44,7 +45,6 @@ include_once __DIR__ . '/includes/header.php';
 
                     <div class="field-divider"></div>
 
-                    <!-- Item 3: Visit -->
                     <div class="form-field-group step-item">
                         <i class="fas fa-camera"></i>
                         <div class="field-content">
@@ -55,7 +55,6 @@ include_once __DIR__ . '/includes/header.php';
 
                     <div class="field-divider"></div>
 
-                    <!-- Item 4: Enjoy -->
                     <div class="form-field-group step-item">
                         <i class="fas fa-heart"></i>
                         <div class="field-content">
@@ -64,7 +63,7 @@ include_once __DIR__ . '/includes/header.php';
                         </div>
                     </div>
 
-                    <!-- Arrow Action Button Redirecting to places.php -->
+                    <!-- Button to view places -->
                     <a href="places.php" class="search-btn redirect-btn" title="Explore Places Now">
                         <i class="fas fa-arrow-right"></i>
                     </a>
@@ -76,14 +75,12 @@ include_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- ===================================================================
-         ABOUT US SECTION (PREMIUM UI ABOUT NEARTRIP)
-         =================================================================== -->
+    <!-- About section -->
     <section class="about-us" id="about">
         <div class="section-container">
             <div class="about-wrapper">
                 
-                <!-- Left Column: Visual Highlight Cards -->
+                <!-- Left column: Visual highlights -->
                 <div class="about-image-column">
                     <div class="about-card-visual">
                         <div class="visual-badge-main">
@@ -106,7 +103,7 @@ include_once __DIR__ . '/includes/header.php';
                     </div>
                 </div>
 
-                <!-- Right Column: Text & Mission Content -->
+                <!-- Right column: Text content -->
                 <div class="about-content-column">
                     <div class="section-subtitle-tag">
                         <i class="fas fa-compass"></i> ABOUT NEARTRIP
@@ -125,18 +122,16 @@ include_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- ===================================================================
-         WHY CHOOSE US SECTION (THREE FEATURE CARDS WITH PURE CSS)
-         =================================================================== -->
+    <!-- Why choose us section -->
     <section class="why-choose-us">
         <div class="section-container">
             
-            <!-- Section Title -->
+            <!-- Section title -->
             <div class="section-header">
                 <h2 class="section-title">WHY CHOOSE US?</h2>
             </div>
 
-            <!-- 3 Feature Cards Row -->
+            <!-- Feature cards -->
             <div class="features-grid">
                 
                 <!-- Card 1: Verified Local Insights -->

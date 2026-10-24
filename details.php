@@ -1,25 +1,12 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * Destination Details Page (details.php)
- * 
- * Requirement Coverage:
- * - Dynamic fetch by attraction_id (FR-DET-01–12)
- * - Prepared SQL queries with Category JOIN
- * - Display all 12 fields gracefully (name, description, category,
- *   location, latitude, longitude, opening_hours, entrance_fee,
- *   facilities, travel_tips, safety_guidelines, image_url)
- * - Graceful fallback handling for optional/missing fields
- * - FR-PL-04 No Results Component Integration
- * ===================================================================
+ * Destination details page.
+ * Loads and displays complete details for a selected attraction.
  */
 
 require_once __DIR__ . '/includes/config.php';
 
-// -------------------------------------------------------------------
-// 1. DYNAMIC ATTRACTION FETCH (FR-DET-01)
-// -------------------------------------------------------------------
+// Get attraction ID from query string and load details from database
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $attraction = null;
 
@@ -52,9 +39,7 @@ include_once __DIR__ . '/includes/header.php';
 ?>
 
 <?php if (!$attraction): ?>
-    <!-- ===================================================================
-         NOT FOUND STATE (FR-PL-04 Integration)
-         =================================================================== -->
+    <!-- Shown when attraction is not found -->
     <main class="details-not-found-section" style="min-height: 70vh; display: flex; align-items: center; justify-content: center; padding: 60px 0;">
         <div class="section-container" style="width: 100%;">
             <?php
@@ -74,12 +59,12 @@ include_once __DIR__ . '/includes/header.php';
     </main>
 <?php else: ?>
     <?php
-        // Resolve image URL or graceful fallback image (FR-DET-12)
+        // Prepare image path or use default fallback image
         $rawImg = !empty($attraction['image_url']) ? $attraction['image_url'] : 'assets/hero.webp';
         $cleanImg = ltrim($rawImg, '/');
         $imagePath = file_exists(__DIR__ . '/' . $cleanImg) ? $cleanImg : 'assets/hero.webp';
         
-        // Resolve GPS Coordinates with default Warakapola fallbacks (FR-DET-05, FR-DET-06)
+        // Prepare coordinates with default Warakapola location as fallback
         $rawLat = !empty($attraction['latitude']) ? floatval($attraction['latitude']) : 0;
         $rawLng = !empty($attraction['longitude']) ? floatval($attraction['longitude']) : 0;
         
@@ -99,12 +84,10 @@ include_once __DIR__ . '/includes/header.php';
         $safetyText       = !empty($attraction['safety_guidelines']) ? $attraction['safety_guidelines'] : '';
     ?>
 
-    <!-- Leaflet CSS for Interactive Location Map -->
+    <!-- Leaflet map stylesheet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 
-    <!-- ===================================================================
-         DESTINATION HERO BANNER
-         =================================================================== -->
+    <!-- Hero banner with title and main details -->
     <section class="details-hero" style="background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%), url('<?php echo htmlspecialchars($imagePath); ?>');">
         <div class="details-hero-content">
             
@@ -133,9 +116,7 @@ include_once __DIR__ . '/includes/header.php';
         </div>
     </section>
 
-    <!-- ===================================================================
-         BREADCRUMB NAVIGATION BAR
-         =================================================================== -->
+    <!-- Breadcrumb links -->
     <div class="details-breadcrumb-bar">
         <div class="details-container">
             <ul class="details-breadcrumb">
@@ -148,16 +129,14 @@ include_once __DIR__ . '/includes/header.php';
         </div>
     </div>
 
-    <!-- ===================================================================
-         MAIN ATTRACTION DETAILS GRID (FR-DET-01–12)
-         =================================================================== -->
+    <!-- Main details section -->
     <main class="details-section">
         <div class="details-container details-grid">
             
-            <!-- LEFT COLUMN: MAIN CONTENT -->
+            <!-- Left column: main details -->
             <div class="details-main-content">
                 
-                <!-- Overview & Description (FR-DET-04) -->
+                <!-- About destination description -->
                 <?php if (!empty($descriptionText)): ?>
                     <div class="details-glass-card">
                         <h2 class="details-card-title">
@@ -171,7 +150,7 @@ include_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Facilities & Amenities (FR-DET-09) -->
+                <!-- Available facilities list -->
                 <?php 
                     $facilitiesList = !empty($facilitiesRaw) ? array_filter(array_map('trim', explode(',', $facilitiesRaw))) : [];
                     if (!empty($facilitiesList)): 
@@ -193,7 +172,7 @@ include_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Travel Tips & Best Time to Visit (FR-DET-10) -->
+                <!-- Travel tips -->
                 <?php if (!empty($travelTipsText)): ?>
                     <div class="details-card tip-card">
                         <h2 class="details-card-title tip-title">
@@ -207,7 +186,7 @@ include_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Essential Safety Guidelines (FR-DET-11) -->
+                <!-- Safety guidelines -->
                 <?php if (!empty($safetyText)): ?>
                     <div class="details-card safety-card">
                         <h2 class="details-card-title safety-title">
@@ -221,7 +200,7 @@ include_once __DIR__ . '/includes/header.php';
                     </div>
                 <?php endif; ?>
 
-                <!-- Interactive Location Mini-Map (FR-MAP-06) -->
+                <!-- Map location -->
                 <div class="details-card">
                     <h2 class="details-card-title">
                         <i class="fas fa-map-location-dot"></i> Interactive Location Map
@@ -231,10 +210,10 @@ include_once __DIR__ . '/includes/header.php';
                             <p style="color: var(--text-muted); margin-bottom: 14px; font-size: 0.92rem;">
                                 GPS Coordinates: <strong><?php echo number_format($lat, 6); ?>, <?php echo number_format($lng, 6); ?></strong>
                             </p>
-                            <!-- Mini-Map Container (FR-MAP-06 Requirement) -->
+                            <!-- Map container -->
                             <div id="mini-map" style="height: 300px; border-radius: 12px; border: 1px solid #CBD5E1; z-index: 1;"></div>
                         <?php else: ?>
-                            <!-- Fallback when coordinates are missing or null -->
+                            <!-- Fallback message when coordinates are not set -->
                             <div style="padding: 30px 20px; background: #F8FAFC; border-radius: 12px; text-align: center; border: 1px dashed #CBD5E1;">
                                 <i class="fas fa-location-slash" style="font-size: 2.2rem; color: var(--text-muted); margin-bottom: 10px;"></i>
                                 <p style="color: var(--text-muted); margin: 0; font-weight: 500;">Location not available on map</p>
@@ -245,10 +224,10 @@ include_once __DIR__ . '/includes/header.php';
 
             </div>
 
-            <!-- RIGHT COLUMN: STICKY SIDEBAR -->
+            <!-- Right column: sidebar with key info and actions -->
             <div class="details-sidebar">
                 
-                <!-- Quick Information Widget -->
+                <!-- Quick information card -->
                 <div class="sidebar-widget">
                     <h3 class="widget-title">Quick Information</h3>
                     
@@ -257,7 +236,7 @@ include_once __DIR__ . '/includes/header.php';
                             <li>
                                 <div class="info-icon"><i class="fas fa-tag"></i></div>
                                 <div>
-                                    <span class="info-label">Category</span>
+                                     <span class="info-label">Category</span>
                                     <strong class="info-value"><?php echo htmlspecialchars($categoryName); ?></strong>
                                 </div>
                             </li>
@@ -302,9 +281,9 @@ include_once __DIR__ . '/includes/header.php';
                         </li>
                     </ul>
 
-                    <!-- Action Buttons -->
+                    <!-- Action buttons -->
                     <div class="widget-actions">
-                        <!-- Add/Remove from Day Trip Itinerary -->
+                        <!-- Add or remove from itinerary -->
                         <?php if (isset($_SESSION['itinerary']) && is_array($_SESSION['itinerary']) && in_array((int)$attraction['attraction_id'], $_SESSION['itinerary'])): ?>
                             <a href="plan.php?remove=<?php echo (int)$attraction['attraction_id']; ?>" class="btn-sidebar-primary added" style="background-color: #27ae60;" title="Click to remove from itinerary">
                                 <i class="fas fa-circle-check"></i> In Your Itinerary
@@ -315,19 +294,19 @@ include_once __DIR__ . '/includes/header.php';
                             </a>
                         <?php endif; ?>
 
-                        <!-- Google Maps Navigation Link -->
+                        <!-- Google Maps directions link -->
                         <a href="https://www.google.com/maps?q=<?php echo $lat; ?>,<?php echo $lng; ?>" target="_blank" class="btn-sidebar-secondary">
                             <i class="fas fa-diamond-turn-right"></i> Get Directions
                         </a>
 
-                        <!-- Back to Destinations Button -->
+                        <!-- Return to destinations list -->
                         <a href="places.php" class="btn-sidebar-outline">
                             <i class="fas fa-arrow-left"></i> Back to Destinations
                         </a>
                     </div>
                 </div>
 
-                <!-- Support & Safety Widget -->
+                <!-- Safety tips callout -->
                 <div class="sidebar-widget support-widget">
                     <h4><i class="fas fa-headset"></i> Day Trip Assistance</h4>
                     <p>Visiting Warakapola & Dorawaka? Check local safety guidelines before traveling.</p>
@@ -341,7 +320,7 @@ include_once __DIR__ . '/includes/header.php';
         </div>
     </main>
 
-    <!-- Leaflet JS Mini-Map Script (FR-MAP-06) -->
+    <!-- Mini map setup script -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -352,16 +331,16 @@ include_once __DIR__ . '/includes/header.php';
             var lng = <?php echo (float)$lng; ?>;
             var name = <?php echo json_encode($attName); ?>;
 
-            // Step 1: Initialize mini-map centered at attraction coordinates with Zoom Level 15
+            // Initialize map with attraction coordinates
             var miniMap = L.map('mini-map').setView([lat, lng], 15);
 
-            // Step 2: Add OpenStreetMap Tile Layer
+            // Add map tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             }).addTo(miniMap);
 
-            // Step 3: Add Leaflet Marker with Popup displaying attraction name
+            // Add marker for this attraction
             var marker = L.marker([lat, lng]).addTo(miniMap);
             marker.bindPopup("<strong style='font-family: Poppins, sans-serif; font-size: 0.95rem; color: #1E293B;'>" + escapeHtml(name) + "</strong><br><span style='font-size: 0.8rem; color: #64748B;'>Location Marker</span>").openPopup();
 
@@ -379,6 +358,6 @@ include_once __DIR__ . '/includes/header.php';
 <?php endif; ?>
 
 <?php
-// Include Footer Component
+// Page footer
 include_once __DIR__ . '/includes/footer.php';
 ?>
