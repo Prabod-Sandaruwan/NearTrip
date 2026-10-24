@@ -1,51 +1,31 @@
 <?php
 /**
- * ===================================================================
- * NEARTRIP - LOCAL TOURIST DAY-VISIT PLANNER
- * One-Day Itinerary Planner (plan.php)
- * 
- * Requirement Coverage:
- * - FR-IT-01: Allow users to select attractions for an itinerary
- * - FR-IT-02: Allow multiple attractions to be added to an itinerary
- * - FR-IT-03: Display selected attractions in the itinerary
- * - FR-IT-04: Allow users to remove attractions from the itinerary
- * - FR-IT-05: Allow users to arrange selected attractions (reorder up/down)
- * - FR-IT-06: Provide a simple one-day visit plan
- * - FR-IT-07: Prevent duplicate attraction entries
- * - FR-IT-08: Notify user when no attraction has been selected
- * - BSR-12: Same attraction shall not be added more than once
- * 
- * Security & Best Practices:
- * - Input validation & intval() sanitization
- * - Database attraction existence verification
- * - Prepared SQL queries
- * - Output escaping with htmlspecialchars()
- * ===================================================================
+ * One-day itinerary planner.
+ * Allows users to add, reorder, and remove attractions for their day trip,
+ * calculate route distances, and preview the tour route on a map.
  */
 
-// 1. PAGE SETUP & DATABASE CONNECTION
+// Load database configuration and helpers
 require_once __DIR__ . '/includes/config.php';
 
-// Ensure Session is active
+// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Initialize itinerary session array if not exists (FR-IT-01, FR-IT-02)
+// Initialize empty itinerary session list if not set
 if (!isset($_SESSION['itinerary']) || !is_array($_SESSION['itinerary'])) {
     $_SESSION['itinerary'] = array();
 }
 
-// -------------------------------------------------------------------
-// 2. ITINERARY ACTIONS HANDLER (Add, Remove, Move Up, Move Down, Clear)
-// -------------------------------------------------------------------
+// Handle itinerary actions: add, remove, reorder, clear, save, and load
 
-// ACTION A: Add Attraction to Itinerary (FR-IT-01, FR-IT-02, FR-IT-07, BSR-12)
+// Add attraction to itinerary
 if (isset($_GET['add'])) {
     $attractionId = intval($_GET['add']);
     
     if ($attractionId > 0) {
-        // Validate if attraction actually exists in database (Security Requirement 2)
+        // Check if attraction exists in database
         $checkStmt = $conn->prepare("SELECT attraction_id, name FROM attraction WHERE attraction_id = ?");
         $checkStmt->bind_param("i", $attractionId);
         $checkStmt->execute();
@@ -54,7 +34,7 @@ if (isset($_GET['add'])) {
         if ($checkResult && $checkResult->num_rows > 0) {
             $attRow = $checkResult->fetch_assoc();
             
-            // Check for duplicate entry (FR-IT-07, BSR-12)
+            // Avoid adding the same attraction twice
             if (!in_array($attractionId, $_SESSION['itinerary'])) {
                 $_SESSION['itinerary'][] = $attractionId;
                 $_SESSION['itinerary_msg'] = [
@@ -76,12 +56,12 @@ if (isset($_GET['add'])) {
         $checkStmt->close();
     }
     
-    // Redirect to prevent form resubmission / duplicate GET actions
+    // Refresh page after adding
     header("Location: plan.php");
     exit();
 }
 
-// ACTION B: Remove Attraction from Itinerary (FR-IT-04)
+// Remove attraction from itinerary
 if (isset($_GET['remove'])) {
     $attractionId = intval($_GET['remove']);
     
@@ -98,7 +78,7 @@ if (isset($_GET['remove'])) {
     exit();
 }
 
-// ACTION C: Move Up in Itinerary (FR-IT-05 - Reorder Logic)
+// Move attraction up in the visit sequence
 if (isset($_GET['up'])) {
     $index = intval($_GET['up']);
     
@@ -118,7 +98,7 @@ if (isset($_GET['up'])) {
     exit();
 }
 
-// ACTION D: Move Down in Itinerary (FR-IT-05 - Reorder Logic)
+// Move attraction down in the visit sequence
 if (isset($_GET['down'])) {
     $index = intval($_GET['down']);
     
@@ -138,7 +118,7 @@ if (isset($_GET['down'])) {
     exit();
 }
 
-// ACTION E: Clear All Attractions
+// Clear all attractions from the itinerary
 if (isset($_GET['clear'])) {
     $_SESSION['itinerary'] = array();
     $_SESSION['itinerary_msg'] = [
@@ -150,7 +130,7 @@ if (isset($_GET['clear'])) {
     exit();
 }
 
-// ACTION F: Save Itinerary to Logged-In User Account
+// Save itinerary to logged-in user account
 if (isset($_POST['save_itinerary']) || isset($_GET['save_tour'])) {
     if (!isLoggedIn()) {
         $_SESSION['itinerary_msg'] = [
@@ -214,13 +194,13 @@ if (isset($_POST['save_itinerary']) || isset($_GET['save_tour'])) {
     exit();
 }
 
-// ACTION G: Load Saved Itinerary from Database into Session
+// Load saved itinerary from database into session
 if (isset($_GET['load_saved'])) {
     $savedId = intval($_GET['load_saved']);
     if ($savedId > 0 && isLoggedIn()) {
         $userId = (int)$_SESSION['admin_id'];
         
-        // Security check: ensure this itinerary belongs to logged in user (or admin)
+        // Ensure this itinerary belongs to the logged-in user or admin
         $checkSql = isAdmin() 
             ? "SELECT * FROM `itinerary` WHERE `itinerary_id` = ?"
             : "SELECT * FROM `itinerary` WHERE `itinerary_id` = ? AND `admin_id` = ?";
@@ -261,7 +241,7 @@ if (isset($_GET['load_saved'])) {
     exit();
 }
 
-// ACTION H: Delete Saved Itinerary
+// Delete saved itinerary from database
 if (isset($_GET['delete_saved'])) {
     $savedId = intval($_GET['delete_saved']);
     if ($savedId > 0 && isLoggedIn()) {
@@ -306,13 +286,11 @@ if (isset($_GET['delete_saved'])) {
     exit();
 }
 
-// -------------------------------------------------------------------
-// 3. FETCH ATTRACTIONS IN SESSION ORDER (FR-IT-03)
-// -------------------------------------------------------------------
+// Fetch attractions in the exact order stored in the session
 $itineraryAttractions = array();
 
 if (!empty($_SESSION['itinerary'])) {
-    // Sanitize integer IDs for SQL IN clause
+    // Sanitize integer IDs for SQL query
     $cleanIds = array_map('intval', $_SESSION['itinerary']);
     $implodedIds = implode(',', $cleanIds);
     
@@ -331,7 +309,7 @@ if (!empty($_SESSION['itinerary'])) {
             $fetchedItems[$row['attraction_id']] = $row;
         }
         
-        // Build final list matching exact session order, filtering out any missing items
+        // Build list matching session order
         foreach ($_SESSION['itinerary'] as $sId) {
             if (isset($fetchedItems[$sId])) {
                 $itineraryAttractions[] = $fetchedItems[$sId];
@@ -340,16 +318,93 @@ if (!empty($_SESSION['itinerary'])) {
     }
 }
 
-// Define Page Title
+// Prepare tour stops and calculate distances and drive times
+$tourMapStops = array();
+$totalStraightDistance = 0.0;
+$prevLat = null;
+$prevLng = null;
+$gmapsWaypoints = array();
+
+if (!empty($itineraryAttractions)) {
+    foreach ($itineraryAttractions as $idx => $item) {
+        $lat = !empty($item['latitude']) ? (float)$item['latitude'] : 0.0;
+        $lng = !empty($item['longitude']) ? (float)$item['longitude'] : 0.0;
+        
+        if ($lat != 0.0 && $lng != 0.0) {
+            $rawImg = !empty($item['image_url']) ? $item['image_url'] : 'assets/hero.webp';
+            $cleanImg = ltrim($rawImg, '/');
+            $imagePath = file_exists(__DIR__ . '/' . $cleanImg) ? $cleanImg : 'assets/hero.webp';
+            
+            $stepDistFromPrev = 0.0;
+            if ($prevLat !== null && $prevLng !== null) {
+                // Calculate distance between consecutive stops using Haversine formula
+                $earthRadius = 6371; // km
+                $dLat = deg2rad($lat - $prevLat);
+                $dLon = deg2rad($lng - $prevLng);
+                $a = sin($dLat / 2) * sin($dLat / 2) +
+                     cos(deg2rad($prevLat)) * cos(deg2rad($lat)) *
+                     sin($dLon / 2) * sin($dLon / 2);
+                $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+                // Add winding factor of ~1.25 for local road conditions
+                $stepDistFromPrev = round($earthRadius * $c * 1.25, 1);
+                $totalStraightDistance += $stepDistFromPrev;
+            }
+            $prevLat = $lat;
+            $prevLng = $lng;
+
+            $tourMapStops[] = [
+                'id' => (int)$item['attraction_id'],
+                'step' => $idx + 1,
+                'name' => $item['name'],
+                'lat' => $lat,
+                'lng' => $lng,
+                'location' => !empty($item['location']) ? $item['location'] : 'Warakapola Zone',
+                'category' => !empty($item['category_name']) ? $item['category_name'] : 'Attraction',
+                'hours' => !empty($item['opening_hours']) ? $item['opening_hours'] : 'Regular Hours',
+                'fee' => !empty($item['entrance_fee']) ? $item['entrance_fee'] : 'Free / Standard',
+                'image' => $imagePath,
+                'dist_from_prev' => $stepDistFromPrev
+            ];
+            $gmapsWaypoints[] = $lat . ',' . $lng;
+        }
+    }
+}
+
+$totalRouteDistanceKm = round($totalStraightDistance, 1);
+$totalTravelMinutes = max(15, round(($totalRouteDistanceKm / 28) * 60));
+if ($totalTravelMinutes >= 60) {
+    $hoursPart = floor($totalTravelMinutes / 60);
+    $minsPart = $totalTravelMinutes % 60;
+    $totalRouteTimeString = $hoursPart . " hr " . ($minsPart > 0 ? $minsPart . " mins" : "");
+} else {
+    $totalRouteTimeString = $totalTravelMinutes . " mins";
+}
+
+// Build Google Maps navigation link
+$googleMapsUrl = "";
+if (count($gmapsWaypoints) >= 2) {
+    $origin = $gmapsWaypoints[0];
+    $dest = $gmapsWaypoints[count($gmapsWaypoints) - 1];
+    $midPoints = array_slice($gmapsWaypoints, 1, count($gmapsWaypoints) - 2);
+    $googleMapsUrl = "https://www.google.com/maps/dir/?api=1&origin=" . $origin . "&destination=" . $dest;
+    if (!empty($midPoints)) {
+        $googleMapsUrl .= "&waypoints=" . implode('|', $midPoints);
+    }
+} elseif (count($gmapsWaypoints) === 1) {
+    $googleMapsUrl = "https://www.google.com/maps/search/?api=1&query=" . $gmapsWaypoints[0];
+}
+
+// Load Leaflet map stylesheet
+$extraHead = '<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />';
+
+// Page title
 $pageTitle = "One-Day Itinerary Planner - NearTrip Warakapola";
 
-// Include Navigation Header
+// Navigation header
 include_once __DIR__ . '/includes/header.php';
 ?>
 
-<!-- ===================================================================
-     PAGE HERO BANNER
-     =================================================================== -->
+<!-- Hero banner -->
 <section class="page-hero">
     <div>
         <h1 class="page-hero-title"><i class="fas fa-route"></i> One-Day Itinerary Planner</h1>
@@ -357,13 +412,11 @@ include_once __DIR__ . '/includes/header.php';
     </div>
 </section>
 
-<!-- ===================================================================
-     MAIN ITINERARY SECTION
-     =================================================================== -->
+<!-- Main itinerary section -->
 <main class="why-choose-us" style="padding: 60px 20px;">
     <div class="section-container" style="max-width: 1200px;">
 
-        <!-- Session Flash Message Notification -->
+        <!-- Status message -->
         <?php if (isset($_SESSION['itinerary_msg'])): ?>
             <div class="itinerary-alert itinerary-alert-<?php echo htmlspecialchars($_SESSION['itinerary_msg']['type']); ?>">
                 <i class="fas <?php 
@@ -377,9 +430,7 @@ include_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
 
         <?php if (empty($itineraryAttractions)): ?>
-            <!-- ===============================================================
-                 EMPTY ITINERARY STATE (FR-IT-08)
-                 =============================================================== -->
+            <!-- Shown when itinerary is empty -->
             <div class="itinerary-empty-card">
                 <div class="empty-icon-wrapper">
                     <i class="fas fa-map-location-dot"></i>
@@ -393,9 +444,7 @@ include_once __DIR__ . '/includes/header.php';
                 </div>
             </div>
         <?php else: ?>
-            <!-- ===============================================================
-                 ACTIVE ITINERARY LIST & CONTROLS (FR-IT-03, FR-IT-04, FR-IT-05)
-                 =============================================================== -->
+            <!-- Selected attractions list and controls -->
             
             <div class="itinerary-header-actions">
                 <div class="itinerary-count-badge">
@@ -403,6 +452,11 @@ include_once __DIR__ . '/includes/header.php';
                     <span><strong><?php echo count($itineraryAttractions); ?></strong> Attraction<?php echo (count($itineraryAttractions) > 1) ? 's' : ''; ?> Selected</span>
                 </div>
                 <div class="itinerary-top-btns">
+                    <?php if (!empty($tourMapStops)): ?>
+                        <a href="#plannerTourMapSection" class="btn-action-map-jump" onclick="scrollToTourMap(); return false;" title="Quick scroll down to the tour route map">
+                            <i class="fas fa-map-location-dot"></i> View on Map <i class="fas fa-arrow-down"></i>
+                        </a>
+                    <?php endif; ?>
                     <a href="places.php" class="btn-action-outline">
                         <i class="fas fa-plus"></i> Add More Places
                     </a>
@@ -414,7 +468,7 @@ include_once __DIR__ . '/includes/header.php';
 
             <div class="itinerary-grid-wrapper">
                 
-                <!-- LEFT/MAIN COLUMN: REORDERABLE CARDS -->
+                <!-- List of itinerary stops -->
                 <div class="itinerary-cards-list">
                     <h3 class="itinerary-section-title">Selected Stop Sequence</h3>
                     
@@ -443,7 +497,7 @@ include_once __DIR__ . '/includes/header.php';
                                 <div class="itinerary-card-header">
                                     <h4 class="itinerary-title">
                                         <a href="details.php?id=<?php echo $item['attraction_id']; ?>">
-                                            <?php echo htmlspecialchars($item['name']); ?>
+                                             <?php echo htmlspecialchars($item['name']); ?>
                                         </a>
                                     </h4>
                                     <?php if (!empty($item['category_name'])): ?>
@@ -475,9 +529,14 @@ include_once __DIR__ . '/includes/header.php';
                                 </div>
                             </div>
 
-                            <!-- Action Controls (Move Up, Move Down, Remove) -->
+                            <!-- Stop actions: locate on map, reorder up or down, remove -->
                             <div class="itinerary-card-controls">
-                                <!-- Move Up Button (FR-IT-05) -->
+                                <!-- Locate on Map Button -->
+                                <button type="button" class="btn-locate-card" onclick="focusPlannerStop(<?php echo $index; ?>);" title="Locate stop #<?php echo ($index + 1); ?> on the map above">
+                                    <i class="fas fa-location-crosshairs"></i> View on Map
+                                </button>
+
+                                <!-- Move up -->
                                 <?php if ($index > 0): ?>
                                     <a href="plan.php?up=<?php echo $index; ?>" class="btn-reorder btn-up" title="Move Up in sequence">
                                         <i class="fas fa-arrow-up"></i>
@@ -488,7 +547,7 @@ include_once __DIR__ . '/includes/header.php';
                                     </span>
                                 <?php endif; ?>
 
-                                <!-- Move Down Button (FR-IT-05) -->
+                                <!-- Move down -->
                                 <?php if ($index < $totalCount - 1): ?>
                                     <a href="plan.php?down=<?php echo $index; ?>" class="btn-reorder btn-down" title="Move Down in sequence">
                                         <i class="fas fa-arrow-down"></i>
@@ -499,7 +558,7 @@ include_once __DIR__ . '/includes/header.php';
                                     </span>
                                 <?php endif; ?>
 
-                                <!-- Remove Button (FR-IT-04) -->
+                                <!-- Remove stop -->
                                 <a href="plan.php?remove=<?php echo $item['attraction_id']; ?>" class="btn-remove-item" title="Remove from itinerary" onclick="return confirm('Remove this attraction from your itinerary?');">
                                     <i class="fas fa-xmark"></i>
                                 </a>
@@ -510,7 +569,7 @@ include_once __DIR__ . '/includes/header.php';
 
                 </div>
 
-                <!-- RIGHT COLUMN: STRUCTURED ONE-DAY VISIT PLAN DISPLAY (FR-IT-06) -->
+                <!-- Sidebar summary of the visit plan -->
                 <div class="itinerary-summary-sidebar">
                     
                     <div class="visit-plan-card">
@@ -527,7 +586,7 @@ include_once __DIR__ . '/includes/header.php';
                                         <div class="plan-step-details">
                                             <strong><?php echo htmlspecialchars($att['name']); ?></strong>
                                             
-                                            <?php if (!empty($att['opening_hours'])): ?>
+                                             <?php if (!empty($att['opening_hours'])): ?>
                                                 <div class="plan-sub-detail">
                                                     <i class="fas fa-clock"></i> <?php echo htmlspecialchars($att['opening_hours']); ?>
                                                 </div>
@@ -549,8 +608,12 @@ include_once __DIR__ . '/includes/header.php';
                                     <strong><?php echo count($itineraryAttractions); ?> Places</strong>
                                 </div>
                                 <div class="summary-line">
-                                    <span>Estimated Duration:</span>
-                                    <strong>Full Day Visit</strong>
+                                    <span>Estimated Route Distance:</span>
+                                    <strong>~<?php echo $totalRouteDistanceKm; ?> km</strong>
+                                </div>
+                                <div class="summary-line">
+                                    <span>Estimated Drive Time:</span>
+                                    <strong>~<?php echo $totalRouteTimeString; ?></strong>
                                 </div>
                             </div>
 
@@ -585,12 +648,239 @@ include_once __DIR__ . '/includes/header.php';
 
             </div>
 
+            <!-- Interactive tour route map -->
+            <?php if (!empty($tourMapStops)): ?>
+                <div id="plannerTourMapSection" class="planner-map-card" style="margin-top: 36px; scroll-margin-top: 90px;">
+                    <div class="planner-map-header">
+                        <div class="planner-map-title-group">
+                            <h3><i class="fas fa-map-location-dot"></i> Interactive Tour Route & Stop Preview</h3>
+                            <p class="planner-map-subtitle">Visual itinerary map connecting your selected stops in sequential order (1 &rarr; <?php echo count($tourMapStops); ?>).</p>
+                        </div>
+                        
+                        <div class="route-action-buttons">
+                            <button type="button" id="btnFitPlannerMap" class="btn-route-action" title="Fit map view to all tour stops">
+                                <i class="fas fa-expand"></i> Fit Route
+                            </button>
+                            <a href="map.php?tour=active" class="btn-route-action btn-primary-action" title="Open in fullscreen interactive map mode">
+                                <i class="fas fa-up-right-from-square"></i> Fullscreen Map Mode
+                            </a>
+                            <?php if (!empty($googleMapsUrl)): ?>
+                                <a href="<?php echo htmlspecialchars($googleMapsUrl); ?>" target="_blank" rel="noopener noreferrer" class="btn-route-action btn-gmaps" title="Open multi-stop driving directions in Google Maps">
+                                    <i class="fab fa-google"></i> Google Maps Navigation
+                                </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Route Statistics Pill Bar -->
+                    <div class="route-stats-pill-bar">
+                        <div class="route-stat-item">
+                            <i class="fas fa-location-dot"></i>
+                            <span>Stops: <strong><?php echo count($itineraryAttractions); ?> Places</strong></span>
+                        </div>
+                        <div class="route-stat-divider"></div>
+                        <div class="route-stat-item">
+                            <i class="fas fa-road"></i>
+                            <span>Estimated Route Distance: <strong>~<?php echo $totalRouteDistanceKm; ?> km</strong></span>
+                        </div>
+                        <div class="route-stat-divider"></div>
+                        <div class="route-stat-item">
+                            <i class="fas fa-car-side"></i>
+                            <span>Estimated Travel Time: <strong>~<?php echo $totalRouteTimeString; ?></strong></span>
+                        </div>
+                        <div class="route-stat-divider"></div>
+                        <div class="route-stat-item" style="color: #059669;">
+                            <i class="fas fa-circle-check"></i>
+                            <span><strong>Sequential 1-Day Route Ready</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Map Container -->
+                    <div id="plannerTourMap" class="planner-tour-map-box"></div>
+                </div>
+            <?php endif; ?>
+
         <?php endif; ?>
 
     </div>
 </main>
 
+<?php if (!empty($tourMapStops)): ?>
+<!-- Tour route map initialization script -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var mapEl = document.getElementById('plannerTourMap');
+    if (!mapEl) return;
+
+    var stopsData = <?php echo json_encode($tourMapStops, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+    if (!stopsData || stopsData.length === 0) return;
+
+    // Initialize map centered on the first stop or Dorawaka
+    var defaultLat = stopsData[0].lat || 7.1592;
+    var defaultLng = stopsData[0].lng || 80.2020;
+    var tourMap = L.map('plannerTourMap').setView([defaultLat, defaultLng], 12);
+
+    // Add map tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(tourMap);
+
+    var markers = [];
+    var latlngs = [];
+
+    stopsData.forEach(function(stop, idx) {
+        var isStart = (idx === 0);
+        var isFinish = (idx === stopsData.length - 1 && stopsData.length > 1);
+
+        var pinClass = 'tour-pin-container';
+        if (isStart) pinClass += ' tour-pin-start';
+        else if (isFinish) pinClass += ' tour-pin-finish';
+
+        var pulseHtml = isStart ? '<div class="tour-pin-pulse"></div>' : '';
+
+        // Create numbered pin marker icon
+        var customIcon = L.divIcon({
+            className: 'custom-tour-pin',
+            html: `
+                <div class="${pinClass}">
+                    ${pulseHtml}
+                    <div class="tour-pin-body">
+                        <span class="tour-pin-number">${stop.step}</span>
+                    </div>
+                </div>
+            `,
+            iconSize: [38, 38],
+            iconAnchor: [19, 36],
+            popupAnchor: [0, -34]
+        });
+
+        var marker = L.marker([stop.lat, stop.lng], { icon: customIcon }).addTo(tourMap);
+        latlngs.push([stop.lat, stop.lng]);
+
+        var stopBadgeText = isStart 
+            ? 'Stop #' + stop.step + ' (Start)' 
+            : (isFinish ? 'Stop #' + stop.step + ' (Final Stop)' : 'Stop #' + stop.step);
+        
+        var badgeColor = isStart ? '#059669' : (isFinish ? '#DC2626' : '#2D7D46');
+
+        var popupHtml = `
+            <div class="map-popup-card">
+                <div class="map-popup-img-wrapper">
+                    <img src="${escapeHtml(stop.image)}" alt="${escapeHtml(stop.name)}" class="map-popup-img">
+                </div>
+                <div class="map-popup-body">
+                    <span style="background:${badgeColor}; color:#fff; font-size:0.7rem; font-weight:700; padding:2px 8px; border-radius:50px; display:inline-block; margin-bottom:6px;">
+                        ${stopBadgeText}
+                    </span>
+                    <h4 class="map-popup-title">${escapeHtml(stop.name)}</h4>
+                    <p class="map-popup-location"><i class="fas fa-location-dot"></i> ${escapeHtml(stop.location)}</p>
+                    <div style="font-size:0.8rem; color:#475569; margin-bottom:10px;">
+                        <div><i class="fas fa-clock" style="color:#64748B;"></i> ${escapeHtml(stop.hours)}</div>
+                        <div><i class="fas fa-ticket" style="color:#64748B;"></i> ${escapeHtml(stop.fee)}</div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <a href="details.php?id=${stop.id}" class="map-popup-btn" style="flex:1; justify-content:center;">
+                            Details <i class="fas fa-arrow-right"></i>
+                        </a>
+                        <a href="https://www.google.com/maps/dir/?api=1&destination=${stop.lat},${stop.lng}" target="_blank" rel="noopener" class="map-popup-btn" style="background:#EA4335; padding:7px 10px;" title="Navigate with Google Maps">
+                            <i class="fab fa-google"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        marker.bindPopup(popupHtml, { maxWidth: 280 });
+        markers.push(marker);
+    });
+
+    // Draw route line connecting all stops
+    if (latlngs.length >= 2) {
+        // Glowing background glow line
+        L.polyline(latlngs, {
+            color: '#10B981',
+            weight: 8,
+            opacity: 0.35,
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(tourMap);
+
+        // Crisp dashed route line
+        L.polyline(latlngs, {
+            color: '#047857',
+            weight: 4,
+            opacity: 0.9,
+            dashArray: '8, 8',
+            lineCap: 'round',
+            lineJoin: 'round'
+        }).addTo(tourMap);
+    }
+
+    // Adjust map view to fit all stops
+    function fitAllStops() {
+        if (latlngs.length > 1) {
+            tourMap.fitBounds(L.latLngBounds(latlngs), { padding: [50, 50], maxZoom: 14 });
+        } else if (latlngs.length === 1) {
+            tourMap.setView(latlngs[0], 13);
+        }
+    }
+    fitAllStops();
+
+    // Button to reset view to fit all stops
+    var btnFit = document.getElementById('btnFitPlannerMap');
+    if (btnFit) {
+        btnFit.addEventListener('click', function() {
+            fitAllStops();
+        });
+    }
+
+    // Scroll down to the tour route map
+    window.scrollToTourMap = function() {
+        var el = document.getElementById('plannerTourMapSection');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            el.style.transition = 'box-shadow 0.3s ease';
+            el.style.boxShadow = '0 0 0 4px rgba(45, 125, 70, 0.4), 0 8px 24px rgba(0,0,0,0.12)';
+            setTimeout(function() {
+                el.style.boxShadow = '';
+            }, 1200);
+        }
+    };
+
+    // Pan and zoom map to a specific stop
+    window.focusPlannerStop = function(stopIndex) {
+        if (markers[stopIndex]) {
+            var targetMarker = markers[stopIndex];
+            var targetLatLng = targetMarker.getLatLng();
+            
+            // Scroll smoothly to map
+            mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            setTimeout(function() {
+                tourMap.flyTo(targetLatLng, 14, { animate: true, duration: 1 });
+                setTimeout(function() {
+                    targetMarker.openPopup();
+                }, 800);
+            }, 300);
+        }
+    };
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+});
+</script>
+<?php endif; ?>
+
 <?php
-// Include Footer Component
+// Page footer
 include_once __DIR__ . '/includes/footer.php';
 ?>
